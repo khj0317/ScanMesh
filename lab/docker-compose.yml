@@ -1,0 +1,45 @@
+# 0주차 실험 환경: 연습용 대상 앱과 점검 엔진을 내 PC에서 돌려 메모리와 실행 시간을 확인합니다.
+# 대상 앱은 lab 네트워크 안에서만 열리고, 확인용으로 localhost:3000에만 바인딩합니다.
+name: secuscan-lab
+
+services:
+  juice-shop:
+    image: bkimminich/juice-shop:latest
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks: [lab]
+    # 0주차 실험에서 템플릿 전체 점검을 받다가 메모리 부족으로 죽었습니다. 죽으면 다시 띄웁니다.
+    restart: unless-stopped
+
+  zap:
+    image: zaproxy/zap-stable:latest
+    profiles: [scan]
+    # 수동 점검(baseline): 사이트를 둘러보며 응답만 살피고 공격 요청은 보내지 않습니다.
+    command: >
+      zap-baseline.py -t http://juice-shop:3000 -m 2 -I
+      -J zap-baseline.json -r zap-baseline.html
+    volumes:
+      - ./results:/zap/wrk
+    networks: [lab]
+    depends_on: [juice-shop]
+
+  nuclei:
+    # -as: 대상의 기술 스택을 먼저 알아내고 맞는 템플릿만 실행합니다.
+    # -rl 50 -c 10: 초당 50건, 동시 10개로 제한해 대상 서버가 죽지 않게 합니다.
+    image: projectdiscovery/nuclei:latest
+    profiles: [scan]
+    command: >
+      -u http://juice-shop:3000 -jsonl -o /results/nuclei.jsonl
+      -as -rl 50 -c 10 -silent -disable-update-check
+    volumes:
+      - ./results:/results
+      - nuclei-templates:/root/nuclei-templates
+    networks: [lab]
+    depends_on: [juice-shop]
+
+networks:
+  lab:
+
+volumes:
+  # 템플릿은 한 번 받아 두고 재사용합니다: docker compose run --rm nuclei -update-templates
+  nuclei-templates:

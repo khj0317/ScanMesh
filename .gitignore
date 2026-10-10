@@ -1,0 +1,7 @@
+lab/results/
+.env
+*.log
+.idea/
+.vscode/
+build/
+node_modules/
