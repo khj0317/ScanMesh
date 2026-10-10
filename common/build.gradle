@@ -1,0 +1,18 @@
+plugins {
+	id 'java-library'
+	id 'io.spring.dependency-management'
+}
+
+// API와 워커가 함께 쓰는 순수 자바 코드. 스프링에 의존하지 않고 버전 관리만 스프링 부트 BOM을 따른다
+dependencyManagement {
+	imports {
+		mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+	}
+}
+
+dependencies {
+	testImplementation 'org.junit.jupiter:junit-jupiter'
+	testImplementation 'org.junit.jupiter:junit-jupiter-params'
+	testImplementation 'org.assertj:assertj-core'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}

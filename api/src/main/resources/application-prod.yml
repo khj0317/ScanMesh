@@ -1,0 +1,14 @@
+jwt:
+  # 기본값 없음: 배포에서 개발용 키로 토큰을 발급하는 일이 없게 한다
+  secret: ${JWT_SECRET}
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
+
+springdoc:
+  # 배포에서는 API 문서 화면을 닫는다
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false

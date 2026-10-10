@@ -1,0 +1,28 @@
+plugins {
+	id 'org.springframework.boot' version '4.1.1' apply false
+	id 'io.spring.dependency-management' version '1.1.7' apply false
+}
+
+subprojects {
+	apply plugin: 'java'
+
+	group = 'com.secuscan'
+	version = '0.0.1-SNAPSHOT'
+
+	java {
+		toolchain {
+			// 워커가 점검 엔진을 기다리는 시간이 길어서 가상 스레드를 쓰려고 21로 둔다
+			languageVersion = JavaLanguageVersion.of(21)
+		}
+	}
+
+	repositories {
+		mavenCentral()
+	}
+
+	tasks.withType(Test).configureEach {
+		useJUnitPlatform()
+		// 서비스 기준 시간대(KST)로 고정해서, UTC인 CI 서버에서도 똑같이 동작하게 한다
+		jvmArgs '-Duser.timezone=Asia/Seoul'
+	}
+}

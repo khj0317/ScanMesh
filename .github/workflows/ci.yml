@@ -1,0 +1,27 @@
+# 푸시·PR마다 전체 모듈을 빌드하고 테스트한다.
+# API 테스트는 Testcontainers로 실제 Postgres를 띄워 마이그레이션과 행 잠금까지 확인한다
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - name: Build and test
+        run: chmod +x gradlew && ./gradlew build --no-daemon
+      - name: Upload test report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: '*/build/reports/tests/test'

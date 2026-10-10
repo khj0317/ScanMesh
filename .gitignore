@@ -5,3 +5,4 @@ lab/results/
 .vscode/
 build/
 node_modules/
+.gradle/

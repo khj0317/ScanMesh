@@ -1,0 +1,3 @@
+rootProject.name = 'secuscan'
+
+include 'common', 'api', 'worker'
