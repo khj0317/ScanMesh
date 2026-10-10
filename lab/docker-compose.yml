@@ -1,6 +1,6 @@
 # 0주차 실험 환경: 연습용 대상 앱과 점검 엔진을 내 PC에서 돌려 메모리와 실행 시간을 확인합니다.
 # 대상 앱은 lab 네트워크 안에서만 열리고, 확인용으로 localhost:3000에만 바인딩합니다.
-name: secuscan-lab
+name: scanmesh-lab
 
 services:
   juice-shop:

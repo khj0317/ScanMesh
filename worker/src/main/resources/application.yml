@@ -1,6 +1,6 @@
 spring:
   application:
-    name: secuscan-worker
+    name: scanmesh-worker
   main:
     # 워커는 API를 열지 않고, 먼저 API 서버에 접속해 작업을 가져간다
     web-application-type: none

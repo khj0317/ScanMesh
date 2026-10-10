@@ -1,11 +1,11 @@
 spring:
   application:
-    name: secuscan-api
+    name: scanmesh-api
   # 로컬은 docker-compose의 Postgres(5434), 배포는 환경 변수로 Supabase에 연결한다
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5434/secuscan}
-    username: ${DB_USERNAME:secuscan}
-    password: ${DB_PASSWORD:secuscan}
+    url: ${DB_URL:jdbc:postgresql://localhost:5434/scanmesh}
+    username: ${DB_USERNAME:scanmesh}
+    password: ${DB_PASSWORD:scanmesh}
     hikari:
       maximum-pool-size: ${DB_POOL_SIZE:10}
   jpa:
@@ -39,6 +39,6 @@ jwt:
   refresh-token-validity: ${JWT_REFRESH_VALIDITY:14d}
 
 app:
-  # 여러 개면 쉼표로 구분, * 패턴 가능 (예: https://secuscan-*.vercel.app)
+  # 여러 개면 쉼표로 구분, * 패턴 가능 (예: https://scanmesh-*.vercel.app)
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5180}

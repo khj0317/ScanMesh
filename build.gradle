@@ -6,7 +6,7 @@ plugins {
 subprojects {
 	apply plugin: 'java'
 
-	group = 'com.secuscan'
+	group = 'com.scanmesh'
 	version = '0.0.1-SNAPSHOT'
 
 	java {

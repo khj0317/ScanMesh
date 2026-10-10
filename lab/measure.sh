@@ -3,7 +3,7 @@
 # 사용법: ./measure.sh zap | ./measure.sh nuclei
 set -u
 svc="$1"
-name="secuscan-lab-$svc-measure"
+name="scanmesh-lab-$svc-measure"
 docker rm -f "$name" >/dev/null 2>&1
 start=$(date +%s)
 docker compose --profile scan run -d --name "$name" "$svc" >/dev/null

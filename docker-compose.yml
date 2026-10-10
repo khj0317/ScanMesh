@@ -1,19 +1,19 @@
 # 로컬 개발용 DB. StoreFit(5433), FitMate(5432)와 겹치지 않게 5434를 쓴다
-name: secuscan
+name: scanmesh
 
 services:
   postgres:
     image: postgres:17-alpine
     environment:
-      POSTGRES_DB: secuscan
-      POSTGRES_USER: secuscan
-      POSTGRES_PASSWORD: secuscan
+      POSTGRES_DB: scanmesh
+      POSTGRES_USER: scanmesh
+      POSTGRES_PASSWORD: scanmesh
     ports:
       - "127.0.0.1:5434:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U secuscan -d secuscan"]
+      test: ["CMD-SHELL", "pg_isready -U scanmesh -d scanmesh"]
       interval: 5s
       timeout: 3s
       retries: 10
