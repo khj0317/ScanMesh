@@ -9,12 +9,12 @@
 
 | 모듈 | 하는 일 |
 | --- | --- |
-| `common` | API와 워커가 함께 쓰는 코드: 점검 엔진 종류, 작업 상태 전이 규칙 |
+| `common` | API와 워커가 함께 쓰는 코드: 점검 엔진 종류, 작업 상태 전이 규칙, SSRF 방어용 주소 검사 |
 | `api` | 회원, 점검 대상, 점검 요청, 작업 큐, 결과 저장 (Spring Boot, 포트 8090) |
 | `worker` | API에서 작업을 가져와 점검 엔진을 실행 (내 PC Docker에서 실행) |
 | `lab` | 0주차 점검 엔진 실험 환경과 측정 결과 |
 
-설계(ERD, 상태 흐름, API, 주요 결정)는 [docs/design.md](docs/design.md)에 있습니다.
+설계(ERD, 상태 흐름, API, SSRF 방어, 주요 결정)는 [docs/design.md](docs/design.md)에 있습니다.
 
 ## 로컬 실행
 
@@ -31,4 +31,5 @@ docker compose up -d          # Postgres (localhost:5434)
 
 - [x] 0주차: 점검 엔진 시험 → [lab/README.md](lab/README.md)
 - [x] 1주차: 설계, 멀티 모듈 셋업, CI, 회원 기능 (가입, 로그인, 리프레시 토큰 회전과 탈취 감지)
-- [ ] 2주차: 점검 대상 등록, 도메인 소유 인증, SSRF 방어
+- [x] 2주차: 점검 대상 등록, 도메인 소유 인증(DNS TXT, 인증 파일), SSRF 방어
+- [ ] 3주차: 점검 요청, 작업 큐, 워커 API

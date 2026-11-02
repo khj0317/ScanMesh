@@ -11,6 +11,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	// 사용자가 입력한 주소로 요청을 보낼 때, 연결할 IP를 직접 검사하려고 DNS 조회를 바꿔 끼울 수 있는 클라이언트를 쓴다
+	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1'
 	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'

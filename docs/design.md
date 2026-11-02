@@ -28,7 +28,7 @@ flowchart LR
 
 ## 2. ERD
 
-1주차에는 `members`, `refresh_tokens`만 만들고 나머지는 해당 주차에 Flyway 마이그레이션으로 추가합니다.
+1주차에 `members`, `refresh_tokens`, 2주차에 `targets`를 만들었고 나머지는 해당 주차에 Flyway 마이그레이션으로 추가합니다.
 
 ```mermaid
 erDiagram
@@ -64,6 +64,7 @@ erDiagram
         varchar verification_method "DNS_TXT, WELL_KNOWN_FILE"
         varchar verification_token
         timestamptz verified_at "null이면 점검 불가"
+        timestamptz last_verification_attempt_at "인증 확인 간격 제한"
     }
     scans {
         bigint id PK
@@ -159,14 +160,21 @@ stateDiagram-v2
 | GET | `/api/members/me` | 내 정보 | 사용자 |
 | GET | `/api/health` | 서버 상태 | - |
 
-### 2주차 이후 (예정)
+### 2주차 (구현 완료)
+
+| 메서드 | 경로 | 설명 | 인증 |
+| --- | --- | --- | --- |
+| POST | `/api/targets` | 점검 대상 등록, 소유 인증 토큰 발급 | 사용자 |
+| GET | `/api/targets` | 내 점검 대상 목록 | 사용자 |
+| POST | `/api/targets/{id}/verify` | 소유 인증 확인. 실패해도 200으로 `verified: false`와 고칠 점을 돌려줌. 10초에 한 번 | 사용자 |
+| DELETE | `/api/targets/{id}` | 점검 대상 삭제 | 사용자 |
+
+다른 회원의 대상은 403 대신 404로 응답해서 대상 ID가 있는지 알 수 없게 합니다.
+
+### 3주차 이후 (예정)
 
 | 메서드 | 경로 | 설명 | 주차 |
 | --- | --- | --- | --- |
-| POST | `/api/targets` | 점검 대상 등록, 소유 인증 토큰 발급 | 2 |
-| GET | `/api/targets` | 내 점검 대상 목록 | 2 |
-| POST | `/api/targets/{id}/verify` | 소유 인증 확인 (DNS TXT 또는 파일) | 2 |
-| DELETE | `/api/targets/{id}` | 점검 대상 삭제 | 2 |
 | POST | `/api/targets/{id}/scans` | 점검 요청 | 3 |
 | GET | `/api/scans/{id}` | 점검 상태와 진행률 | 3 |
 | POST | `/api/scans/{id}/cancel` | 점검 취소 | 3 |
@@ -186,7 +194,34 @@ stateDiagram-v2
 { "status": 409, "code": "DUPLICATE_EMAIL", "message": "이미 가입된 이메일입니다." }
 ```
 
-## 5. 주요 결정
+## 5. 점검 대상과 SSRF 방어
+
+점검 서비스는 사용자가 입력한 주소로 서버가 직접 요청을 보내므로, 그 주소가 내부망을 가리키면
+우리 서버를 통해 바깥에서 보이지 않는 곳(DB, 클라우드 메타데이터 `169.254.169.254` 등)을 건드릴 수 있습니다(SSRF).
+
+### 소유 인증
+
+| 방법 | 사용자가 할 일 |
+| --- | --- |
+| `DNS_TXT` | `_scanmesh-verification.{host}`에 TXT 레코드로 인증 토큰을 추가 |
+| `WELL_KNOWN_FILE` | `{origin}/.well-known/scanmesh-verification.txt`에 인증 토큰 한 줄을 올림 |
+
+인증하지 않은 대상은 점검을 요청할 수 없습니다(3주차에 적용).
+
+### 검사 단계
+
+| 단계 | 검사 | 위치 |
+| --- | --- | --- |
+| 등록 | http/https만, 도메인만(IP 주소 불가), 아이디·비밀번호(@) 불가, `localhost`·`.internal`·`.local` 같은 내부용 이름 불가 | `TargetUrl` |
+| 등록 | DNS로 찾은 주소가 하나라도 내부망·예약 주소면 거부 | `TargetService` |
+| 인증 파일 요청 | 연결 직전에 다시 DNS를 조회해 검사하고, 검사한 주소로 그대로 연결 (DNS 리바인딩 방어) | `SafeHttpClient` |
+| 인증 파일 요청 | 리다이렉트는 같은 호스트 안에서 3번까지, 전체 5초, 본문 4KB까지, 프록시 사용 안 함 | `SafeHttpClient` |
+| 점검 (4주차) | 워커가 점검 시작 전에 같은 규칙으로 다시 검사 | `common`의 `PublicAddressPolicy` |
+
+막는 주소 범위(사설망, 루프백, 링크 로컬, 통신사 NAT, 멀티캐스트, 문서용, IPv6 ULA·NAT64·6to4, IPv4 매핑 주소 등)는
+`PublicAddressPolicy`에 있고, API와 워커가 함께 쓰도록 `common` 모듈에 둡니다.
+
+## 6. 주요 결정
 
 | 결정 | 이유 | 대안과 버린 이유 |
 | --- | --- | --- |
@@ -196,4 +231,6 @@ stateDiagram-v2
 | 엔진별 작업 분리 | 가벼운·무거운 워커 분리, 한 엔진이 실패해도 나머지 결과는 남음 | 점검 하나를 통째로 실행: ZAP 하나가 죽으면 전부 실패 |
 | 엔진별 요청 속도 제한, 대상 응답 없으면 중단 | 0주차 실험에서 제한 없는 Nuclei 점검에 Juice Shop이 메모리 부족으로 죽음 | - |
 | 이메일 로그인, 액세스 토큰 30분 + 리프레시 토큰 14일 회전 | 리프레시 토큰은 쓸 때마다 바꾸고, 버린 토큰이 다시 오면 탈취로 보고 모든 로그인을 끊음 | 세션: 프론트(Vercel)와 API(Render)가 다른 도메인이라 쿠키 설정이 까다로움 |
+| 검사한 IP로 그대로 연결하는 HTTP 클라이언트 (Apache HttpClient의 DNS 조회 단계에서 검사) | 검사할 때와 연결할 때 DNS를 따로 조회하면 그 사이에 응답을 내부 주소로 바꿀 수 있음 | 요청 전에 `InetAddress`로 한 번 검사: DNS 리바인딩에 뚫림. JDK `HttpClient`: DNS 조회를 바꿔 끼울 수 없음 |
+| 인증 확인 간격 제한을 조건부 UPDATE 한 문장으로 | 동시에 눌러도 한 번만 통과하고, 외부 요청을 기다리는 동안 행을 잠그지 않음 | `SELECT ... FOR UPDATE`: 최대 5초 걸리는 외부 요청 동안 DB 연결과 잠금을 붙잡음 |
 | JWT subject에 회원 ID 사용 | 요청마다 DB를 조회하지 않고 인증, 이메일이 바뀌어도 토큰이 유효 | 이메일: 바뀔 수 있는 값 |
