@@ -2,6 +2,7 @@ package com.scanmesh.api.common.config;
 
 import com.scanmesh.api.auth.security.JwtAuthenticationFilter;
 import com.scanmesh.api.common.exception.ErrorCode;
+import com.scanmesh.api.worker.security.WorkerAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +38,7 @@ public class SecurityConfig {
     };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final WorkerAuthenticationFilter workerAuthenticationFilter;
 
     @Value("${app.cors.allowed-origins}")
     private List<String> allowedOrigins;
@@ -82,9 +84,13 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(PERMIT_ALL_PATHS).permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                // 워커 토큰으로만 들어온다. 사용자 JWT로는 403
+                .requestMatchers("/api/worker/**").hasRole("WORKER")
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            // JWT 필터 뒤에 둬서, 워커 경로에서는 JWT로 인증된 정보를 지우고 워커 토큰만 보게 한다
+            .addFilterAfter(workerAuthenticationFilter, JwtAuthenticationFilter.class);
         return http.build();
     }
 

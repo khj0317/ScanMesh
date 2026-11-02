@@ -42,3 +42,8 @@ app:
   # 여러 개면 쉼표로 구분, * 패턴 가능 (예: https://scanmesh-*.vercel.app)
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5180}
+  scan:
+    # 워커는 임대 시간의 1/3마다 하트비트를 보낸다
+    lease: ${SCAN_LEASE:90s}
+    max-attempts: ${SCAN_MAX_ATTEMPTS:3}
+    reaper-interval: ${SCAN_REAPER_INTERVAL:30s}

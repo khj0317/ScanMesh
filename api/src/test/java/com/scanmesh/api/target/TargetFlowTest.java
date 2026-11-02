@@ -181,12 +181,6 @@ class TargetFlowTest extends IntegrationTest {
             .andExpect(status().isUnauthorized());
     }
 
-    private String memberToken() throws Exception {
-        String email = uniqueEmail();
-        signup(email);
-        return field(login(email), "accessToken");
-    }
-
     private ResultActions createTarget(String token, String url, String method) throws Exception {
         return mockMvc.perform(post("/api/targets")
             .header("Authorization", bearer(token))
@@ -207,10 +201,6 @@ class TargetFlowTest extends IntegrationTest {
 
     private static long idOf(String json) {
         return ((Number) JsonPath.read(json, "$.id")).longValue();
-    }
-
-    private static String bearer(String token) {
-        return "Bearer " + token;
     }
 
     private static String uniqueHost() {

@@ -17,8 +17,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * 컨테이너와 스프링 컨텍스트를 모든 테스트 클래스가 공유하므로,
  * 테스트끼리 데이터가 겹치지 않게 매번 고유한 이메일로 가입한다.
+ * 임대 정리는 테스트가 원하는 때에 직접 부르도록, 자동 실행 주기를 테스트보다 길게 둔다.
  */
-@SpringBootTest
+@SpringBootTest(properties = "app.scan.reaper-interval=1h")
 @AutoConfigureMockMvc
 @Import({TestcontainersConfiguration.class, FakeNetworkConfiguration.class})
 public abstract class IntegrationTest {
@@ -50,6 +51,17 @@ public abstract class IntegrationTest {
             """.formatted(email, PASSWORD))
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString();
+    }
+
+    /** 새 회원으로 가입하고 로그인해서 받은 액세스 토큰 */
+    protected String memberToken() throws Exception {
+        String email = uniqueEmail();
+        signup(email);
+        return field(login(email), "accessToken");
+    }
+
+    protected static String bearer(String token) {
+        return "Bearer " + token;
     }
 
     protected static String field(String json, String path) {

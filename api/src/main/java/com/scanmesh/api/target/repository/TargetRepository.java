@@ -1,7 +1,9 @@
 package com.scanmesh.api.target.repository;
 
 import com.scanmesh.api.target.entity.Target;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,6 +17,11 @@ public interface TargetRepository extends JpaRepository<Target, Long> {
     List<Target> findAllByMemberIdOrderByIdDesc(Long memberId);
 
     Optional<Target> findByIdAndMemberId(Long id, Long memberId);
+
+    /** 같은 대상에 점검 요청이 동시에 들어와도, 진행 중인 점검이 있는지 확인하고 만드는 일을 한 번에 하나씩만 하게 잠근다 */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select t from Target t where t.id = :id and t.member.id = :memberId")
+    Optional<Target> findByIdAndMemberIdForUpdate(@Param("id") Long id, @Param("memberId") Long memberId);
 
     boolean existsByMemberIdAndHost(Long memberId, String host);
 

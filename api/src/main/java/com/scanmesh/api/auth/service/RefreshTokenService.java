@@ -4,21 +4,16 @@ import com.scanmesh.api.auth.entity.RefreshToken;
 import com.scanmesh.api.auth.repository.RefreshTokenRepository;
 import com.scanmesh.api.common.exception.BusinessException;
 import com.scanmesh.api.common.exception.ErrorCode;
+import com.scanmesh.api.common.security.SecretTokens;
 import com.scanmesh.api.member.entity.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
-import java.util.HexFormat;
 
 /**
  * 리프레시 토큰은 쓸 때마다 새것으로 바꾼다(회전). 이미 바꿔서 버린 토큰이 다시 들어오면
@@ -31,7 +26,6 @@ public class RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final Clock clock;
-    private final SecureRandom random = new SecureRandom();
 
     @Value("${jwt.refresh-token-validity}")
     private Duration refreshTokenValidity;
@@ -41,11 +35,9 @@ public class RefreshTokenService {
 
     @Transactional
     public String issue(Member member) {
-        byte[] bytes = new byte[32];
-        random.nextBytes(bytes);
-        String raw = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        String raw = SecretTokens.generate();
         Instant now = clock.instant();
-        refreshTokenRepository.save(new RefreshToken(member, hash(raw), now, now.plus(refreshTokenValidity)));
+        refreshTokenRepository.save(new RefreshToken(member, SecretTokens.hash(raw), now, now.plus(refreshTokenValidity)));
         return raw;
     }
 
@@ -53,7 +45,7 @@ public class RefreshTokenService {
     @Transactional(noRollbackFor = BusinessException.class)
     public Rotated rotate(String rawToken) {
         Instant now = clock.instant();
-        RefreshToken token = refreshTokenRepository.findByTokenHashForUpdate(hash(rawToken))
+        RefreshToken token = refreshTokenRepository.findByTokenHashForUpdate(SecretTokens.hash(rawToken))
             .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN));
 
         if (token.isRevoked()) {
@@ -70,16 +62,7 @@ public class RefreshTokenService {
 
     @Transactional
     public void revoke(String rawToken) {
-        refreshTokenRepository.findByTokenHashForUpdate(hash(rawToken))
+        refreshTokenRepository.findByTokenHashForUpdate(SecretTokens.hash(rawToken))
             .ifPresent(token -> token.revoke(clock.instant()));
-    }
-
-    private static String hash(String raw) {
-        try {
-            byte[] digest = MessageDigest.getInstance("SHA-256").digest(raw.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(digest);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
-        }
     }
 }

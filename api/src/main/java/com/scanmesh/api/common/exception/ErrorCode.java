@@ -20,7 +20,16 @@ public enum ErrorCode {
     TARGET_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "점검 대상을 더 등록할 수 없습니다. 쓰지 않는 대상을 삭제해주세요."),
     // 다른 회원의 대상도 같은 응답을 준다. 403으로 구분하면 다른 회원의 대상 ID가 있는지 알아낼 수 있다
     TARGET_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 점검 대상입니다."),
-    VERIFICATION_TOO_FREQUENT(HttpStatus.TOO_MANY_REQUESTS, "소유 인증 확인은 잠시 후 다시 시도해주세요.");
+    VERIFICATION_TOO_FREQUENT(HttpStatus.TOO_MANY_REQUESTS, "소유 인증 확인은 잠시 후 다시 시도해주세요."),
+
+    TARGET_NOT_VERIFIED(HttpStatus.CONFLICT, "소유 인증을 마친 대상만 점검할 수 있습니다."),
+    SCAN_ALREADY_RUNNING(HttpStatus.CONFLICT, "이 대상은 이미 점검 중입니다. 끝난 뒤에 다시 요청해주세요."),
+    SCAN_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 점검입니다."),
+
+    INVALID_WORKER_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 워커 토큰입니다."),
+    TASK_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 작업입니다."),
+    // 임대가 끝나 다른 워커에게 넘어갔거나 이미 끝난 작업. 워커는 이 응답을 받으면 하던 일을 버린다
+    TASK_LEASE_LOST(HttpStatus.CONFLICT, "이 워커가 맡고 있는 작업이 아닙니다.");
 
     private final HttpStatus status;
     private final String message;

@@ -27,9 +27,27 @@ docker compose up -d          # Postgres (localhost:5434)
 ./gradlew build               # 전체 빌드와 테스트 (테스트는 Testcontainers로 Postgres를 띄움)
 ```
 
+### 워커 등록
+
+워커는 관리자가 등록해서 받은 토큰으로 API에 접속합니다. 관리자 가입 화면은 없으므로 가입한 계정의 권한을 DB에서 바꿉니다.
+
+```bash
+docker compose exec postgres psql -U scanmesh -c "update members set role = 'ADMIN' where email = '내 이메일'"
+```
+
+다시 로그인해서 받은 토큰으로 `POST /api/admin/workers`에 `{"name": "my-pc-light", "kind": "LIGHT"}`를 보내면
+워커 토큰이 한 번만 나옵니다. 워커를 실행할 때 환경 변수로 넣습니다.
+
+```bash
+WORKER_TOKEN=받은토큰 WORKER_KIND=LIGHT ./gradlew :worker:bootRun
+```
+
+4주차에 엔진이 들어오기 전까지 워커는 실행할 엔진이 없어서 작업을 가져가지 않습니다.
+
 ## 진행 상황
 
 - [x] 0주차: 점검 엔진 시험 → [lab/README.md](lab/README.md)
 - [x] 1주차: 설계, 멀티 모듈 셋업, CI, 회원 기능 (가입, 로그인, 리프레시 토큰 회전과 탈취 감지)
 - [x] 2주차: 점검 대상 등록, 도메인 소유 인증(DNS TXT, 인증 파일), SSRF 방어
-- [ ] 3주차: 점검 요청, 작업 큐, 워커 API
+- [x] 3주차: 점검 요청·취소, PostgreSQL 작업 큐(`SKIP LOCKED`), 워커 API와 작업 루프, 임대·하트비트·재시도
+- [ ] 4주차: 점검 엔진 연동 (자체 규칙, Nuclei, ZAP)
