@@ -155,6 +155,36 @@ class TargetFlowTest extends IntegrationTest {
     }
 
     @Test
+    void 개발용_허용_호스트는_내부_주소여도_등록되고_바로_인증된다() throws Exception {
+        String token = memberToken();
+        HOSTS.put("juice-shop", new InetAddress[]{address("172.18.0.2")});
+
+        String created = createTarget(token, "http://Juice-Shop:3000", "DNS_TXT")
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.baseUrl").value("http://juice-shop:3000/"))
+            .andExpect(jsonPath("$.verified").value(true))
+            .andReturn().getResponse().getContentAsString();
+
+        // 인증 확인을 눌러도 외부 조회 없이 인증된 상태를 돌려준다
+        verify(token, idOf(created))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.verified").value(true));
+        createTarget(memberToken(), "http://host.docker.internal:3000", "WELL_KNOWN_FILE")
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.verified").value(true));
+    }
+
+    @Test
+    void 개발용_허용_호스트가_아니면_내부_이름은_그대로_막는다() throws Exception {
+        String token = memberToken();
+        for (String url : List.of("http://juice-shop.internal:3000", "http://other-app:3000", "http://172.18.0.2:3000")) {
+            createTarget(token, url, "DNS_TXT")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_TARGET_URL"));
+        }
+    }
+
+    @Test
     void 다른_회원의_대상은_보거나_인증하거나_지울_수_없다() throws Exception {
         String owner = memberToken();
         String other = memberToken();

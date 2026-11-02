@@ -228,10 +228,19 @@ stateDiagram-v2
 | 등록 | DNS로 찾은 주소가 하나라도 내부망·예약 주소면 거부 | `TargetService` |
 | 인증 파일 요청 | 연결 직전에 다시 DNS를 조회해 검사하고, 검사한 주소로 그대로 연결 (DNS 리바인딩 방어) | `SafeHttpClient` |
 | 인증 파일 요청 | 리다이렉트는 같은 호스트 안에서 3번까지, 전체 5초, 본문 4KB까지, 프록시 사용 안 함 | `SafeHttpClient` |
-| 점검 (4주차) | 워커가 점검 시작 전에 같은 규칙으로 다시 검사 | `common`의 `PublicAddressPolicy` |
+| 점검 | 워커가 점검 시작 직전에 DNS를 다시 조회해 같은 규칙으로 검사. 내부 주소면 실패로 보고 | 워커의 `TargetGuard` |
 
 막는 주소 범위(사설망, 루프백, 링크 로컬, 통신사 NAT, 멀티캐스트, 문서용, IPv6 ULA·NAT64·6to4, IPv4 매핑 주소 등)는
 `PublicAddressPolicy`에 있고, API와 워커가 함께 쓰도록 `common` 모듈에 둡니다.
+
+### 개발용 허용 호스트
+
+Juice Shop 같은 연습용 대상은 `localhost`나 Docker 서비스 이름(`juice-shop`)이라 위 검사를 통과할 수 없고,
+DNS나 인증 파일로 소유를 증명할 수도 없습니다. 그래서 `DEV_ALLOWED_HOSTS`에 적은 호스트는
+주소 검사를 건너뛰고 등록하자마자 인증된 것으로 봅니다. API와 워커에 같은 값을 넣습니다.
+
+- 기본값은 비어 있습니다.
+- 운영 서버가 내부망을 점검하지 않도록, 배포(prod 프로필)에서 값이 있으면 API 서버가 뜨지 않습니다(`DevAllowedHosts`).
 
 ## 6. 주요 결정
 

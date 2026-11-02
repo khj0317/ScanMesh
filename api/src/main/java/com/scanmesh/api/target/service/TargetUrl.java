@@ -8,6 +8,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -27,6 +28,11 @@ public record TargetUrl(String baseUrl, String host) {
     );
 
     public static TargetUrl parse(String input) {
+        return parse(input, Set.of());
+    }
+
+    /** @param devAllowedHosts 도메인 규칙을 건너뛸 개발용 호스트 (localhost, juice-shop 같은 이름이나 IP) */
+    public static TargetUrl parse(String input, Set<String> devAllowedHosts) {
         String raw = input == null ? "" : input.strip();
         if (raw.isEmpty() || raw.length() > MAX_LENGTH) {
             throw invalid("주소를 " + MAX_LENGTH + "자 이내로 입력해주세요.");
@@ -48,7 +54,7 @@ public record TargetUrl(String baseUrl, String host) {
             throw invalid("주소에 아이디나 비밀번호(@)를 넣을 수 없습니다.");
         }
 
-        String host = normalizeHost(uri);
+        String host = normalizeHost(uri, devAllowedHosts);
         int port = uri.getPort();
         if (port == 0 || port > 65535) {
             throw invalid("포트 번호가 올바르지 않습니다.");
@@ -63,11 +69,15 @@ public record TargetUrl(String baseUrl, String host) {
         return new TargetUrl(baseUrl, host);
     }
 
-    private static String normalizeHost(URI uri) {
+    private static String normalizeHost(URI uri, Set<String> devAllowedHosts) {
         String host = uri.getHost();
         if (host == null) {
             // 한글 도메인은 java.net.URI가 호스트로 읽지 못하므로 authority에서 직접 꺼낸다
             host = hostFromAuthority(uri.getRawAuthority());
+        }
+        String lower = host.toLowerCase(Locale.ROOT);
+        if (devAllowedHosts.contains(lower)) {
+            return lower;
         }
         if (host.startsWith("[") || NUMERIC_HOST.matcher(host).matches()) {
             throw invalid("IP 주소 대신 도메인 이름으로 등록해주세요.");

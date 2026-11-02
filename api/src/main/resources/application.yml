@@ -42,6 +42,10 @@ app:
   # 여러 개면 쉼표로 구분, * 패턴 가능 (예: https://scanmesh-*.vercel.app)
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5180}
+  targets:
+    # 개발용. 여기 적은 호스트는 내부 주소여도 등록되고 바로 인증된다 (예: localhost,juice-shop,host.docker.internal)
+    # 배포(prod)에서 값이 있으면 서버가 뜨지 않는다
+    dev-allowed-hosts: ${DEV_ALLOWED_HOSTS:}
   scan:
     # 워커는 임대 시간의 1/3마다 하트비트를 보낸다
     lease: ${SCAN_LEASE:90s}

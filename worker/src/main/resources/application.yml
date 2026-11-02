@@ -13,3 +13,5 @@ worker:
   token: ${WORKER_TOKEN:}
   kind: ${WORKER_KIND:LIGHT}
   poll-interval: ${WORKER_POLL_INTERVAL:10s}
+  # 내부 주소여도 점검하는 개발용 호스트. API의 DEV_ALLOWED_HOSTS와 같은 값을 넣는다
+  dev-allowed-hosts: ${DEV_ALLOWED_HOSTS:}

@@ -3,6 +3,7 @@ package com.scanmesh.worker.task;
 import com.scanmesh.common.scan.Engine;
 import com.scanmesh.worker.WorkerProperties;
 import com.scanmesh.worker.api.ClaimedTask;
+import com.scanmesh.worker.api.LeaseLostException;
 import com.scanmesh.worker.api.WorkerApi;
 import com.scanmesh.worker.engine.EngineRunner;
 import jakarta.annotation.PreDestroy;
@@ -29,6 +30,7 @@ public class TaskLoop {
 
     private final WorkerApi api;
     private final WorkerProperties properties;
+    private final TargetGuard targetGuard;
     private final Map<Engine, EngineRunner> runners = new EnumMap<>(Engine.class);
     private final ScheduledExecutorService heartbeats = Executors.newSingleThreadScheduledExecutor(
         Thread.ofVirtual().name("heartbeat").factory());
@@ -36,9 +38,10 @@ public class TaskLoop {
     private volatile boolean running;
     private Thread loopThread;
 
-    public TaskLoop(WorkerApi api, WorkerProperties properties, List<EngineRunner> engineRunners) {
+    public TaskLoop(WorkerApi api, WorkerProperties properties, TargetGuard targetGuard, List<EngineRunner> engineRunners) {
         this.api = api;
         this.properties = properties;
+        this.targetGuard = targetGuard;
         // 워커 종류에 맞는 엔진만 맡는다 (가벼운 워커가 ZAP을 돌리지 않게)
         for (EngineRunner runner : engineRunners) {
             if (properties.engines().contains(runner.engine())) {
@@ -94,6 +97,16 @@ public class TaskLoop {
             return false;
         }
         ClaimedTask task = claimed.get();
+        Optional<String> rejected = targetGuard.rejectReason(task);
+        if (rejected.isPresent()) {
+            log.warn("점검 거부: task={}, host={}, {}", task.taskId(), task.host(), rejected.get());
+            try {
+                api.fail(task.taskId(), rejected.get());
+            } catch (LeaseLostException e) {
+                log.warn("거부를 보고하기 전에 임대를 잃음: task={}", task.taskId());
+            }
+            return true;
+        }
         log.info("작업 시작: task={}, engine={}, target={}, attempt={}", task.taskId(), task.engine(), task.targetUrl(), task.attempt());
         executor.execute(task, runners.get(task.engine()));
         return true;

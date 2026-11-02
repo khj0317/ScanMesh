@@ -33,7 +33,7 @@ class RestWorkerApiTest {
     void setUp() {
         RestClient.Builder builder = RestClient.builder();
         server = MockRestServiceServer.bindTo(builder).build();
-        api = new RestWorkerApi(builder, new WorkerProperties("http://api.test", "secret", WorkerKind.LIGHT, Duration.ofSeconds(10)));
+        api = new RestWorkerApi(builder, new WorkerProperties("http://api.test", "secret", WorkerKind.LIGHT, Duration.ofSeconds(10), List.of()));
     }
 
     @Test

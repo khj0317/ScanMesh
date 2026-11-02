@@ -44,6 +44,23 @@ WORKER_TOKEN=받은토큰 WORKER_KIND=LIGHT ./gradlew :worker:bootRun
 
 4주차에 엔진이 들어오기 전까지 워커는 실행할 엔진이 없어서 작업을 가져가지 않습니다.
 
+### 연습용 대상 앱 점검
+
+`localhost`나 Docker 서비스 이름은 SSRF 방어 때문에 대상으로 등록할 수 없습니다. 개발할 때만 API와 워커 모두에
+`DEV_ALLOWED_HOSTS`를 넣으면, 그 호스트는 주소 검사 없이 등록되고 바로 인증됩니다. 배포(prod)에서 값이 있으면 API 서버가 뜨지 않습니다.
+
+```bash
+DEV_ALLOWED_HOSTS=localhost,juice-shop,host.docker.internal ./gradlew :api:bootRun
+```
+
+대상 주소는 워커가 어디서 도는지에 따라 다릅니다.
+
+| 워커 실행 위치 | Juice Shop 주소 |
+| --- | --- |
+| 내 PC에서 `./gradlew :worker:bootRun` | `http://localhost:3000` |
+| Juice Shop과 같은 Docker 네트워크 | `http://juice-shop:3000` |
+| 다른 Docker 컨테이너 | `http://host.docker.internal:3000` |
+
 ## 진행 상황
 
 - [x] 0주차: 점검 엔진 시험 → [lab/README.md](lab/README.md)

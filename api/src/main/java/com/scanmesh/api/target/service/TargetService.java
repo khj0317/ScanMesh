@@ -4,6 +4,7 @@ import com.scanmesh.api.common.exception.BusinessException;
 import com.scanmesh.api.common.exception.ErrorCode;
 import com.scanmesh.api.common.net.HostResolver;
 import com.scanmesh.api.member.repository.MemberRepository;
+import com.scanmesh.api.target.DevAllowedHosts;
 import com.scanmesh.api.target.dto.TargetCreateRequest;
 import com.scanmesh.api.target.dto.TargetResponse;
 import com.scanmesh.api.target.dto.VerificationResponse;
@@ -40,6 +41,7 @@ public class TargetService {
     private final MemberRepository memberRepository;
     private final HostResolver hostResolver;
     private final OwnershipVerifier ownershipVerifier;
+    private final DevAllowedHosts devAllowedHosts;
     private final TransactionTemplate transaction;
     private final Clock clock;
     private final SecureRandom random = new SecureRandom();
@@ -49,6 +51,7 @@ public class TargetService {
         MemberRepository memberRepository,
         HostResolver hostResolver,
         OwnershipVerifier ownershipVerifier,
+        DevAllowedHosts devAllowedHosts,
         PlatformTransactionManager transactionManager,
         Clock clock
     ) {
@@ -56,13 +59,17 @@ public class TargetService {
         this.memberRepository = memberRepository;
         this.hostResolver = hostResolver;
         this.ownershipVerifier = ownershipVerifier;
+        this.devAllowedHosts = devAllowedHosts;
         this.transaction = new TransactionTemplate(transactionManager);
         this.clock = clock;
     }
 
     public TargetResponse create(Long memberId, TargetCreateRequest request) {
-        TargetUrl url = TargetUrl.parse(request.url());
-        checkResolvesToPublicAddress(url.host());
+        TargetUrl url = TargetUrl.parse(request.url(), devAllowedHosts.hosts());
+        boolean devTarget = devAllowedHosts.contains(url.host());
+        if (!devTarget) {
+            checkResolvesToPublicAddress(url.host());
+        }
 
         return transaction.execute(status -> {
             if (targetRepository.existsByMemberIdAndHost(memberId, url.host())) {
@@ -79,6 +86,10 @@ public class TargetService {
                 request.verificationMethod(),
                 newVerificationToken()
             );
+            if (devTarget) {
+                // 연습용 대상은 DNS나 인증 파일을 둘 수 없으므로 바로 인증된 것으로 본다
+                target.markVerified(clock.instant());
+            }
             return TargetResponse.from(targetRepository.save(target));
         });
     }
