@@ -11,7 +11,7 @@
 | --- | --- |
 | `common` | API와 워커가 함께 쓰는 코드: 점검 엔진 종류, 작업 상태 전이 규칙, SSRF 방어용 주소 검사 |
 | `api` | 회원, 점검 대상, 점검 요청, 작업 큐, 결과 저장 (Spring Boot, 포트 8090) |
-| `worker` | API에서 작업을 가져와 점검 엔진을 실행 (내 PC Docker에서 실행) |
+| `worker` | API에서 작업을 가져와 점검 엔진을 실행 (내 PC에서 실행, Nuclei와 ZAP은 Docker 컨테이너로 띄움) |
 | `lab` | 0주차 점검 엔진 실험 환경과 측정 결과 |
 
 설계(ERD, 상태 흐름, API, SSRF 방어, 주요 결정)는 [docs/design.md](docs/design.md)에 있습니다.
@@ -42,7 +42,12 @@ docker compose exec postgres psql -U scanmesh -c "update members set role = 'ADM
 WORKER_TOKEN=받은토큰 WORKER_KIND=LIGHT ./gradlew :worker:bootRun
 ```
 
-4주차에 엔진이 들어오기 전까지 워커는 실행할 엔진이 없어서 작업을 가져가지 않습니다.
+LIGHT 워커는 자체 규칙과 Nuclei를, HEAVY 워커는 ZAP을 실행하므로 전체 엔진을 쓰려면 두 대를 띄웁니다. Docker가 켜져 있어야 합니다.
+
+Nuclei 템플릿은 처음 한 번 받아 둡니다([lab/README.md](lab/README.md)의 템플릿 받기 명령). 기본 볼륨은 `scanmesh-lab_nuclei-templates`이고,
+다른 볼륨을 쓰면 `WORKER_NUCLEI_TEMPLATES_VOLUME`으로 지정합니다.
+
+엔진 결과는 5주차에 API로 보내기 전까지 `worker/worker-results/scan-{점검 ID}/`에 파일로 남습니다.
 
 ### 연습용 대상 앱 점검
 
@@ -53,13 +58,12 @@ WORKER_TOKEN=받은토큰 WORKER_KIND=LIGHT ./gradlew :worker:bootRun
 DEV_ALLOWED_HOSTS=localhost,juice-shop,host.docker.internal ./gradlew :api:bootRun
 ```
 
-대상 주소는 워커가 어디서 도는지에 따라 다릅니다.
+대상 주소는 워커가 어디서 도는지에 따라 다릅니다. Nuclei와 ZAP은 컨테이너 안에서 돌기 때문에 `localhost`로는 Juice Shop에 닿지 않습니다.
 
 | 워커 실행 위치 | Juice Shop 주소 |
 | --- | --- |
-| 내 PC에서 `./gradlew :worker:bootRun` | `http://localhost:3000` |
-| Juice Shop과 같은 Docker 네트워크 | `http://juice-shop:3000` |
-| 다른 Docker 컨테이너 | `http://host.docker.internal:3000` |
+| 내 PC에서 `./gradlew :worker:bootRun` (기본) | `http://host.docker.internal:3000` |
+| 워커도 Juice Shop과 같은 Docker 네트워크 안 (`WORKER_DOCKER_NETWORK` 지정) | `http://juice-shop:3000` |
 
 ## 진행 상황
 
@@ -67,4 +71,5 @@ DEV_ALLOWED_HOSTS=localhost,juice-shop,host.docker.internal ./gradlew :api:bootR
 - [x] 1주차: 설계, 멀티 모듈 셋업, CI, 회원 기능 (가입, 로그인, 리프레시 토큰 회전과 탈취 감지)
 - [x] 2주차: 점검 대상 등록, 도메인 소유 인증(DNS TXT, 인증 파일), SSRF 방어
 - [x] 3주차: 점검 요청·취소, PostgreSQL 작업 큐(`SKIP LOCKED`), 워커 API와 작업 루프, 임대·하트비트·재시도
-- [ ] 4주차: 점검 엔진 연동 (자체 규칙, Nuclei, ZAP)
+- [x] 4주차: 점검 엔진 연동 (자체 규칙, Nuclei, ZAP), DNS 고정, 대상 무응답 시 중단
+- [ ] 5주차: 엔진 결과 통합과 조회

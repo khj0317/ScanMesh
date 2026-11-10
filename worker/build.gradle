@@ -6,6 +6,8 @@ plugins {
 dependencies {
 	implementation project(':common')
 	implementation 'org.springframework.boot:spring-boot-starter-restclient'
+	// 자체 규칙이 검사를 통과한 IP로만 연결하려고 DNS 조회를 바꿔 끼울 수 있는 클라이언트를 쓴다
+	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 

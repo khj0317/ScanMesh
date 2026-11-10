@@ -1,5 +1,7 @@
 package com.scanmesh.worker.engine;
 
+import java.util.Optional;
+
 /** 엔진이 실행 중에 진행률을 알리고 취소 여부를 확인하는 창구 */
 public interface TaskContext {
 
@@ -8,4 +10,7 @@ public interface TaskContext {
 
     /** 사용자가 취소했거나 임대를 잃었으면 true. 엔진은 가능한 빨리 멈춘다 */
     boolean isCancelled();
+
+    /** 대상 도메인을 검사한 뒤 고정한 IP. 개발용 허용 호스트는 고정하지 않아 빈 값 */
+    Optional<String> pinnedAddress();
 }

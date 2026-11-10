@@ -1,4 +1,5 @@
 lab/results/
+worker-results/
 .env
 *.log
 .idea/

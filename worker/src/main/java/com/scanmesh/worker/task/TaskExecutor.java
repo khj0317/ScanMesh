@@ -8,6 +8,7 @@ import com.scanmesh.worker.engine.TaskContext;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -34,8 +35,9 @@ public class TaskExecutor {
         this.reportRetryDelay = reportRetryDelay;
     }
 
-    public Outcome execute(ClaimedTask task, EngineRunner runner) {
-        Run run = new Run(Thread.currentThread());
+    /** @param pinnedAddress 엔진이 연결할 IP. 개발용 허용 호스트면 null */
+    public Outcome execute(ClaimedTask task, EngineRunner runner, String pinnedAddress) {
+        Run run = new Run(Thread.currentThread(), pinnedAddress);
         long interval = Math.max(1, task.heartbeatIntervalSeconds());
         ScheduledFuture<?> heartbeat = heartbeats.scheduleWithFixedDelay(
             () -> sendHeartbeat(task, run), interval, interval, TimeUnit.SECONDS);
@@ -114,13 +116,20 @@ public class TaskExecutor {
     private static final class Run implements TaskContext {
 
         private final Thread engineThread;
+        private final String pinnedAddress;
         private final AtomicInteger progress = new AtomicInteger();
         private volatile boolean cancelled;
         private volatile boolean leaseLost;
         private boolean finished;
 
-        Run(Thread engineThread) {
+        Run(Thread engineThread, String pinnedAddress) {
             this.engineThread = engineThread;
+            this.pinnedAddress = pinnedAddress;
+        }
+
+        @Override
+        public Optional<String> pinnedAddress() {
+            return Optional.ofNullable(pinnedAddress);
         }
 
         @Override

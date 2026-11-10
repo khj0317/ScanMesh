@@ -34,7 +34,7 @@ class TaskExecutorTest {
 
     @Test
     void 엔진이_끝나면_완료를_보고한다() {
-        TaskExecutor.Outcome outcome = executor.execute(TASK, runner((task, context) -> context.reportProgress(100)));
+        TaskExecutor.Outcome outcome = executor.execute(TASK, runner((task, context) -> context.reportProgress(100)), null);
 
         assertThat(outcome).isEqualTo(TaskExecutor.Outcome.SUCCEEDED);
         assertThat(api.calls).containsExactly("complete:7");
@@ -44,7 +44,7 @@ class TaskExecutorTest {
     void 엔진이_실패하면_오류_메시지와_함께_실패를_보고한다() {
         TaskExecutor.Outcome outcome = executor.execute(TASK, runner((task, context) -> {
             throw new IllegalStateException("nuclei 종료 코드 2");
-        }));
+        }), null);
 
         assertThat(outcome).isEqualTo(TaskExecutor.Outcome.FAILED);
         assertThat(api.calls).containsExactly("fail:7:nuclei 종료 코드 2");
@@ -57,7 +57,7 @@ class TaskExecutorTest {
         TaskExecutor.Outcome outcome = executor.execute(TASK, runner((task, context) -> {
             context.reportProgress(30);
             Thread.sleep(Duration.ofSeconds(30));
-        }));
+        }), null);
 
         assertThat(outcome).isEqualTo(TaskExecutor.Outcome.CANCELLED);
         assertThat(api.calls).startsWith("heartbeat:7:30", "heartbeat:7:30");
@@ -69,7 +69,7 @@ class TaskExecutorTest {
     void 임대를_잃으면_엔진을_멈추고_결과를_보내지_않는다() {
         api.leaseLost = true;
 
-        TaskExecutor.Outcome outcome = executor.execute(TASK, runner((task, context) -> Thread.sleep(Duration.ofSeconds(30))));
+        TaskExecutor.Outcome outcome = executor.execute(TASK, runner((task, context) -> Thread.sleep(Duration.ofSeconds(30))), null);
 
         assertThat(outcome).isEqualTo(TaskExecutor.Outcome.LEASE_LOST);
         assertThat(api.calls).containsExactly("heartbeat:7:0");
@@ -79,7 +79,7 @@ class TaskExecutorTest {
     void 결과_보고가_잠깐_실패하면_다시_보낸다() {
         api.failReports = 2;
 
-        TaskExecutor.Outcome outcome = executor.execute(TASK, runner((task, context) -> { }));
+        TaskExecutor.Outcome outcome = executor.execute(TASK, runner((task, context) -> { }), null);
 
         assertThat(outcome).isEqualTo(TaskExecutor.Outcome.SUCCEEDED);
         assertThat(api.calls).containsExactly("complete:7", "complete:7", "complete:7");

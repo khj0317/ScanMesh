@@ -15,3 +15,17 @@ worker:
   poll-interval: ${WORKER_POLL_INTERVAL:10s}
   # 내부 주소여도 점검하는 개발용 호스트. API의 DEV_ALLOWED_HOSTS와 같은 값을 넣는다
   dev-allowed-hosts: ${DEV_ALLOWED_HOSTS:}
+  engines:
+    # 엔진 결과 파일을 남기는 곳. 5주차에 API로 보내기 전까지는 여기서 확인한다
+    results-dir: ${WORKER_RESULTS_DIR:worker-results}
+    # 비우면 Docker 기본 네트워크를 쓴다
+    docker-network: ${WORKER_DOCKER_NETWORK:}
+    nuclei-image: ${WORKER_NUCLEI_IMAGE:projectdiscovery/nuclei:latest}
+    # lab/README.md의 템플릿 받기 명령이 채우는 볼륨을 함께 쓴다
+    nuclei-templates-volume: ${WORKER_NUCLEI_TEMPLATES_VOLUME:scanmesh-lab_nuclei-templates}
+    nuclei-timeout: ${WORKER_NUCLEI_TIMEOUT:20m}
+    zap-image: ${WORKER_ZAP_IMAGE:zaproxy/zap-stable:latest}
+    zap-timeout: ${WORKER_ZAP_TIMEOUT:15m}
+    # 대상이 이 간격으로 이 횟수만큼 연달아 응답하지 않으면 점검을 멈춘다
+    probe-interval: ${WORKER_PROBE_INTERVAL:15s}
+    probe-failures: ${WORKER_PROBE_FAILURES:4}

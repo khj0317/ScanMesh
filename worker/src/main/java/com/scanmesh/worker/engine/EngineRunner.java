@@ -4,8 +4,7 @@ import com.scanmesh.common.scan.Engine;
 import com.scanmesh.worker.api.ClaimedTask;
 
 /**
- * 점검 엔진 하나를 실행한다. 4주차에 자체 규칙, Nuclei, ZAP 구현을 빈으로 추가하면
- * 워커가 그 엔진의 작업을 가져가기 시작한다.
+ * 점검 엔진 하나를 실행한다. 구현을 빈으로 등록하면 워커가 그 엔진의 작업을 가져가기 시작한다.
  */
 public interface EngineRunner {
 

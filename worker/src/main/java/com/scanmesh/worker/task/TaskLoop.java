@@ -63,7 +63,8 @@ public class TaskLoop {
             return;
         }
         running = true;
-        loopThread = Thread.ofVirtual().name("task-loop").start(this::loop);
+        // 워커에는 웹 서버가 없어서, 가상 스레드(데몬)로 돌리면 프로세스를 붙잡는 스레드가 없어 바로 종료된다
+        loopThread = Thread.ofPlatform().name("task-loop").start(this::loop);
     }
 
     @PreDestroy
@@ -97,18 +98,18 @@ public class TaskLoop {
             return false;
         }
         ClaimedTask task = claimed.get();
-        Optional<String> rejected = targetGuard.rejectReason(task);
-        if (rejected.isPresent()) {
-            log.warn("점검 거부: task={}, host={}, {}", task.taskId(), task.host(), rejected.get());
+        TargetGuard.Inspection inspection = targetGuard.inspect(task);
+        if (inspection.rejectReason() != null) {
+            log.warn("점검 거부: task={}, host={}, {}", task.taskId(), task.host(), inspection.rejectReason());
             try {
-                api.fail(task.taskId(), rejected.get());
+                api.fail(task.taskId(), inspection.rejectReason());
             } catch (LeaseLostException e) {
                 log.warn("거부를 보고하기 전에 임대를 잃음: task={}", task.taskId());
             }
             return true;
         }
         log.info("작업 시작: task={}, engine={}, target={}, attempt={}", task.taskId(), task.engine(), task.targetUrl(), task.attempt());
-        executor.execute(task, runners.get(task.engine()));
+        executor.execute(task, runners.get(task.engine()), inspection.pinnedAddress());
         return true;
     }
 
