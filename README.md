@@ -47,7 +47,8 @@ LIGHT 워커는 자체 규칙과 Nuclei를, HEAVY 워커는 ZAP을 실행하므�
 Nuclei 템플릿은 처음 한 번 받아 둡니다([lab/README.md](lab/README.md)의 템플릿 받기 명령). 기본 볼륨은 `scanmesh-lab_nuclei-templates`이고,
 다른 볼륨을 쓰면 `WORKER_NUCLEI_TEMPLATES_VOLUME`으로 지정합니다.
 
-엔진 결과는 5주차에 API로 보내기 전까지 `worker/worker-results/scan-{점검 ID}/`에 파일로 남습니다.
+엔진 결과는 공통 형식으로 바꿔 작업 완료 보고에 실어 API에 저장하고, `GET /api/scans/{id}/findings`로 봅니다.
+Nuclei와 ZAP의 원본 결과 파일은 확인용으로 `worker/worker-results/scan-{점검 ID}/`에 남고, 7일(`WORKER_RESULTS_RETENTION`)이 지나면 워커가 지웁니다.
 
 ### 연습용 대상 앱 점검
 
@@ -72,4 +73,5 @@ DEV_ALLOWED_HOSTS=localhost,juice-shop,host.docker.internal ./gradlew :api:bootR
 - [x] 2주차: 점검 대상 등록, 도메인 소유 인증(DNS TXT, 인증 파일), SSRF 방어
 - [x] 3주차: 점검 요청·취소, PostgreSQL 작업 큐(`SKIP LOCKED`), 워커 API와 작업 루프, 임대·하트비트·재시도
 - [x] 4주차: 점검 엔진 연동 (자체 규칙, Nuclei, ZAP), DNS 고정, 대상 무응답 시 중단
-- [ ] 5주차: 엔진 결과 통합과 조회
+- [x] 5주차: 엔진 결과를 공통 형식으로 통합, 엔진 간 중복 묶기, OWASP Top 10 분류, 결과 조회 API
+- [ ] 6주차: 화면

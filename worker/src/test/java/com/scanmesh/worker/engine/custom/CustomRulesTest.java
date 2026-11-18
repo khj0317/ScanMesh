@@ -1,5 +1,6 @@
 package com.scanmesh.worker.engine.custom;
 
+import com.scanmesh.common.finding.Finding;
 import com.scanmesh.worker.engine.http.TargetFetcher.Response;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -54,6 +55,7 @@ class CustomRulesTest {
             .containsExactlyInAnyOrder("COOKIE_NO_SECURE", "COOKIE_NO_HTTPONLY", "COOKIE_NO_SAMESITE");
         assertThat(findings).allSatisfy(finding -> {
             assertThat(finding.evidence()).isEqualTo("쿠키: session");
+            assertThat(finding.param()).isEqualTo("session");
         });
         assertThat(ruleIds(HTTPS, with("set-cookie", "session=x; Secure; HttpOnly; SameSite=Lax"))).isEmpty();
     }

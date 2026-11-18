@@ -2,7 +2,9 @@ package com.scanmesh.api.scan.controller;
 
 import com.scanmesh.api.auth.security.MemberPrincipal;
 import com.scanmesh.api.scan.dto.ScanCreateRequest;
+import com.scanmesh.api.scan.dto.ScanFindingsResponse;
 import com.scanmesh.api.scan.dto.ScanResponse;
+import com.scanmesh.api.scan.service.FindingService;
 import com.scanmesh.api.scan.service.ScanService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,7 @@ import java.util.List;
 public class ScanController {
 
     private final ScanService scanService;
+    private final FindingService findingService;
 
     @PostMapping("/api/targets/{targetId}/scans")
     @ResponseStatus(HttpStatus.CREATED)
@@ -40,6 +43,11 @@ public class ScanController {
     @GetMapping("/api/scans/{id}")
     public ScanResponse get(@AuthenticationPrincipal MemberPrincipal principal, @PathVariable Long id) {
         return scanService.get(principal.memberId(), id);
+    }
+
+    @GetMapping("/api/scans/{id}/findings")
+    public ScanFindingsResponse findings(@AuthenticationPrincipal MemberPrincipal principal, @PathVariable Long id) {
+        return findingService.list(principal.memberId(), id);
     }
 
     @PostMapping("/api/scans/{id}/cancel")

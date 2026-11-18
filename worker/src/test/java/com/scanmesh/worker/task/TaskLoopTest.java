@@ -6,9 +6,13 @@ import com.scanmesh.worker.WorkerProperties;
 import com.scanmesh.worker.api.ClaimedTask;
 import com.scanmesh.worker.api.WorkerApi;
 import com.scanmesh.worker.engine.EngineRunner;
+import com.scanmesh.worker.engine.EngineTestSupport;
+import com.scanmesh.worker.engine.ResultStore;
 import com.scanmesh.worker.engine.TaskContext;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
@@ -18,10 +22,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TaskLoopTest {
 
+    @TempDir
+    Path results;
+
     @Test
     void 작업_루프는_데몬이_아닌_스레드로_돌아_프로세스를_붙잡는다() {
         WorkerProperties properties = new WorkerProperties("http://api", "token", WorkerKind.LIGHT, Duration.ofHours(1), List.of());
-        TaskLoop loop = new TaskLoop(new IdleApi(), properties, new TargetGuard(properties), List.of(new CustomStub()));
+        TaskLoop loop = new TaskLoop(new IdleApi(), properties, new TargetGuard(properties),
+            new ResultStore(EngineTestSupport.properties(results, Duration.ofSeconds(15), 4)), List.of(new CustomStub()));
 
         loop.start();
         try {
@@ -47,7 +55,7 @@ class TaskLoopTest {
         }
 
         @Override
-        public void complete(Long taskId) {
+        public void complete(Long taskId, List<com.scanmesh.common.finding.Finding> findings) {
         }
 
         @Override
@@ -63,7 +71,8 @@ class TaskLoopTest {
         }
 
         @Override
-        public void run(ClaimedTask task, TaskContext context) {
+        public List<com.scanmesh.common.finding.Finding> run(ClaimedTask task, TaskContext context) {
+            return List.of();
         }
     }
 }

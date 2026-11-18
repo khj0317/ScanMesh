@@ -1,5 +1,6 @@
 package com.scanmesh.worker.engine.container;
 
+import com.scanmesh.common.finding.Finding;
 import com.scanmesh.common.scan.Engine;
 import com.scanmesh.worker.api.ClaimedTask;
 import com.scanmesh.worker.engine.EngineProperties;
@@ -16,7 +17,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 
-/** ZAP baseline으로 사이트를 둘러보며 응답을 살핀다. 공격 요청은 보내지 않는다. 결과는 zap.json */
+/** ZAP baseline으로 사이트를 둘러보며 응답을 살핀다. 공격 요청은 보내지 않는다. 원본 보고서는 zap.json으로 남긴다 */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -27,6 +28,7 @@ public class ZapEngine implements EngineRunner {
     private static final Duration EXPECTED = Duration.ofMinutes(3);
     /** zap-baseline.py의 종료 코드: 0 통과, 1 FAIL 항목 있음, 2 WARN 항목 있음, 3 그 밖의 오류 */
     private static final int ZAP_ERROR = 3;
+    private static final int MAX_FINDINGS = 500;
 
     private final ContainerRunner containers;
     private final ResultStore results;
@@ -38,7 +40,7 @@ public class ZapEngine implements EngineRunner {
     }
 
     @Override
-    public void run(ClaimedTask task, TaskContext context) throws IOException, InterruptedException {
+    public List<Finding> run(ClaimedTask task, TaskContext context) throws IOException, InterruptedException {
         Path directory = results.directoryFor(task);
         ContainerRunner.Spec spec = new ContainerRunner.Spec(
             properties.zapImage(),
@@ -57,6 +59,8 @@ public class ZapEngine implements EngineRunner {
         if (exitCode >= ZAP_ERROR || !Files.exists(directory.resolve(REPORT))) {
             throw new IOException("ZAP이 보고서를 만들지 못했습니다(종료 코드 " + exitCode + "). 로그: " + spec.logFile());
         }
-        log.info("ZAP 완료: task={}, 결과 폴더={}", task.taskId(), directory);
+        List<Finding> findings = ZapReport.parse(directory.resolve(REPORT), MAX_FINDINGS);
+        log.info("ZAP 완료: task={}, 발견 {}건, 결과 폴더={}", task.taskId(), findings.size(), directory);
+        return findings;
     }
 }

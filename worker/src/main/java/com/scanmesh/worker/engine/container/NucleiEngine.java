@@ -1,5 +1,6 @@
 package com.scanmesh.worker.engine.container;
 
+import com.scanmesh.common.finding.Finding;
 import com.scanmesh.common.scan.Engine;
 import com.scanmesh.worker.api.ClaimedTask;
 import com.scanmesh.worker.engine.EngineProperties;
@@ -15,7 +16,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 
-/** Nuclei로 알려진 CVE와 설정 실수를 찾는다. 결과는 nuclei.jsonl (발견한 것이 없으면 파일이 없다) */
+/** Nuclei로 알려진 CVE와 설정 실수를 찾는다. 원본 결과는 nuclei.jsonl로 남긴다 (발견한 것이 없으면 파일이 없다) */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -23,6 +24,7 @@ public class NucleiEngine implements EngineRunner {
 
     /** 0주차 측정: -as -rl 50 -c 10 으로 253초 */
     private static final Duration EXPECTED = Duration.ofMinutes(5);
+    private static final int MAX_FINDINGS = 500;
 
     private final ContainerRunner containers;
     private final ResultStore results;
@@ -34,7 +36,7 @@ public class NucleiEngine implements EngineRunner {
     }
 
     @Override
-    public void run(ClaimedTask task, TaskContext context) throws IOException, InterruptedException {
+    public List<Finding> run(ClaimedTask task, TaskContext context) throws IOException, InterruptedException {
         Path directory = results.directoryFor(task);
         ContainerRunner.Spec spec = new ContainerRunner.Spec(
             properties.nucleiImage(),
@@ -56,6 +58,8 @@ public class NucleiEngine implements EngineRunner {
         if (exitCode != 0) {
             throw new IOException("Nuclei가 종료 코드 " + exitCode + "로 끝났습니다. 로그: " + spec.logFile());
         }
-        log.info("Nuclei 완료: task={}, 결과 폴더={}", task.taskId(), directory);
+        List<Finding> findings = NucleiResults.parse(directory.resolve("nuclei.jsonl"), MAX_FINDINGS);
+        log.info("Nuclei 완료: task={}, 발견 {}건, 결과 폴더={}", task.taskId(), findings.size(), directory);
+        return findings;
     }
 }

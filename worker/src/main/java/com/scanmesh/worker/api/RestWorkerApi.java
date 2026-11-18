@@ -1,5 +1,6 @@
 package com.scanmesh.worker.api;
 
+import com.scanmesh.common.finding.Finding;
 import com.scanmesh.common.scan.Engine;
 import com.scanmesh.worker.WorkerProperties;
 import org.springframework.http.HttpStatus;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -57,9 +59,11 @@ public class RestWorkerApi implements WorkerApi {
     }
 
     @Override
-    public void complete(Long taskId) {
+    public void complete(Long taskId, List<Finding> findings) {
         client.post()
             .uri("/api/worker/tasks/{id}/complete", taskId)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(Map.of("findings", findings))
             .retrieve()
             .toBodilessEntity();
     }

@@ -1,5 +1,7 @@
 package com.scanmesh.worker.task;
 
+import com.scanmesh.common.finding.Finding;
+import com.scanmesh.common.finding.Severity;
 import com.scanmesh.common.scan.Engine;
 import com.scanmesh.worker.api.ClaimedTask;
 import com.scanmesh.worker.api.LeaseLostException;
@@ -37,7 +39,7 @@ class TaskExecutorTest {
         TaskExecutor.Outcome outcome = executor.execute(TASK, runner((task, context) -> context.reportProgress(100)), null);
 
         assertThat(outcome).isEqualTo(TaskExecutor.Outcome.SUCCEEDED);
-        assertThat(api.calls).containsExactly("complete:7");
+        assertThat(api.calls).containsExactly("complete:7:1");
     }
 
     @Test
@@ -82,7 +84,7 @@ class TaskExecutorTest {
         TaskExecutor.Outcome outcome = executor.execute(TASK, runner((task, context) -> { }), null);
 
         assertThat(outcome).isEqualTo(TaskExecutor.Outcome.SUCCEEDED);
-        assertThat(api.calls).containsExactly("complete:7", "complete:7", "complete:7");
+        assertThat(api.calls).containsExactly("complete:7:1", "complete:7:1", "complete:7:1");
     }
 
     private static EngineRunner runner(Body body) {
@@ -93,8 +95,9 @@ class TaskExecutorTest {
             }
 
             @Override
-            public void run(ClaimedTask task, TaskContext context) throws Exception {
+            public List<Finding> run(ClaimedTask task, TaskContext context) throws Exception {
                 body.run(task, context);
+                return List.of(new Finding("R1", "t", Severity.LOW, null, task.targetUrl(), null, null, null));
             }
         };
     }
@@ -127,8 +130,8 @@ class TaskExecutorTest {
         }
 
         @Override
-        public void complete(Long taskId) {
-            calls.add("complete:" + taskId);
+        public void complete(Long taskId, List<Finding> findings) {
+            calls.add("complete:" + taskId + ":" + findings.size());
             if (failReports-- > 0) {
                 throw new IllegalStateException("네트워크 오류");
             }

@@ -75,7 +75,7 @@ class RestWorkerApiTest {
         server.expect(requestTo("http://api.test/api/worker/tasks/7/complete")).andRespond(withStatus(HttpStatus.CONFLICT));
         server.expect(requestTo("http://api.test/api/worker/tasks/8/heartbeat")).andRespond(withStatus(HttpStatus.NOT_FOUND));
 
-        assertThatThrownBy(() -> api.complete(7L)).isInstanceOf(LeaseLostException.class);
+        assertThatThrownBy(() -> api.complete(7L, List.of())).isInstanceOf(LeaseLostException.class);
         assertThatThrownBy(() -> api.heartbeat(8L, 0)).isInstanceOf(LeaseLostException.class);
     }
 }

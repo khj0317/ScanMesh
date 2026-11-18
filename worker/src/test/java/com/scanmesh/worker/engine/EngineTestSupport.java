@@ -26,7 +26,7 @@ public final class EngineTestSupport {
     }
 
     public static EngineProperties properties(Path resultsDir, Duration probeInterval, int probeFailures) {
-        return new EngineProperties(resultsDir, "", "nuclei:test", "templates-volume", Duration.ofMinutes(20), "zap:test", Duration.ofMinutes(15), probeInterval, probeFailures);
+        return new EngineProperties(resultsDir, Duration.ofDays(7), "", "nuclei:test", "templates-volume", Duration.ofMinutes(20), "zap:test", Duration.ofMinutes(15), probeInterval, probeFailures);
     }
 
     public static TargetFetcher.Response ok(String body) {

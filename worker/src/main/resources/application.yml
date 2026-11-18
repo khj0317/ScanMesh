@@ -16,8 +16,10 @@ worker:
   # 내부 주소여도 점검하는 개발용 호스트. API의 DEV_ALLOWED_HOSTS와 같은 값을 넣는다
   dev-allowed-hosts: ${DEV_ALLOWED_HOSTS:}
   engines:
-    # 엔진 결과 파일을 남기는 곳. 5주차에 API로 보내기 전까지는 여기서 확인한다
+    # 엔진 원본 결과 파일을 남기는 곳. 결과는 API에 저장되므로 변환을 확인할 때만 쓴다
     results-dir: ${WORKER_RESULTS_DIR:worker-results}
+    # 이 기간이 지난 점검 폴더는 워커가 지운다
+    results-retention: ${WORKER_RESULTS_RETENTION:7d}
     # 비우면 Docker 기본 네트워크를 쓴다
     docker-network: ${WORKER_DOCKER_NETWORK:}
     nuclei-image: ${WORKER_NUCLEI_IMAGE:projectdiscovery/nuclei:latest}

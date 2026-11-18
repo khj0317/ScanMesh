@@ -6,6 +6,7 @@ import com.scanmesh.worker.api.ClaimedTask;
 import com.scanmesh.worker.api.LeaseLostException;
 import com.scanmesh.worker.api.WorkerApi;
 import com.scanmesh.worker.engine.EngineRunner;
+import com.scanmesh.worker.engine.ResultStore;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -31,6 +32,7 @@ public class TaskLoop {
     private final WorkerApi api;
     private final WorkerProperties properties;
     private final TargetGuard targetGuard;
+    private final ResultStore results;
     private final Map<Engine, EngineRunner> runners = new EnumMap<>(Engine.class);
     private final ScheduledExecutorService heartbeats = Executors.newSingleThreadScheduledExecutor(
         Thread.ofVirtual().name("heartbeat").factory());
@@ -38,10 +40,11 @@ public class TaskLoop {
     private volatile boolean running;
     private Thread loopThread;
 
-    public TaskLoop(WorkerApi api, WorkerProperties properties, TargetGuard targetGuard, List<EngineRunner> engineRunners) {
+    public TaskLoop(WorkerApi api, WorkerProperties properties, TargetGuard targetGuard, ResultStore results, List<EngineRunner> engineRunners) {
         this.api = api;
         this.properties = properties;
         this.targetGuard = targetGuard;
+        this.results = results;
         // 워커 종류에 맞는 엔진만 맡는다 (가벼운 워커가 ZAP을 돌리지 않게)
         for (EngineRunner runner : engineRunners) {
             if (properties.engines().contains(runner.engine())) {
@@ -62,6 +65,7 @@ public class TaskLoop {
             log.warn("{} 워커가 실행할 수 있는 엔진이 아직 없어 작업을 가져오지 않습니다.", properties.kind());
             return;
         }
+        results.deleteExpired();
         running = true;
         // 워커에는 웹 서버가 없어서, 가상 스레드(데몬)로 돌리면 프로세스를 붙잡는 스레드가 없어 바로 종료된다
         loopThread = Thread.ofPlatform().name("task-loop").start(this::loop);
@@ -110,6 +114,8 @@ public class TaskLoop {
         }
         log.info("작업 시작: task={}, engine={}, target={}, attempt={}", task.taskId(), task.engine(), task.targetUrl(), task.attempt());
         executor.execute(task, runners.get(task.engine()), inspection.pinnedAddress());
+        // 작업이 끝날 때마다 정리해서, 워커를 오래 켜 둬도 원본 파일이 쌓이지 않게 한다
+        results.deleteExpired();
         return true;
     }
 

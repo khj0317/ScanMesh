@@ -1,5 +1,6 @@
 package com.scanmesh.worker.task;
 
+import com.scanmesh.common.finding.Finding;
 import com.scanmesh.worker.api.ClaimedTask;
 import com.scanmesh.worker.api.LeaseLostException;
 import com.scanmesh.worker.api.WorkerApi;
@@ -8,6 +9,8 @@ import com.scanmesh.worker.engine.TaskContext;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -24,6 +27,8 @@ public class TaskExecutor {
     public enum Outcome { SUCCEEDED, FAILED, CANCELLED, LEASE_LOST }
 
     private static final int REPORT_ATTEMPTS = 3;
+    /** API가 작업 하나에서 받는 최대 발견 항목 수와 같다 */
+    static final int MAX_FINDINGS = 500;
 
     private final WorkerApi api;
     private final ScheduledExecutorService heartbeats;
@@ -43,8 +48,9 @@ public class TaskExecutor {
             () -> sendHeartbeat(task, run), interval, interval, TimeUnit.SECONDS);
 
         Exception error = null;
+        List<Finding> findings = List.of();
         try {
-            runner.run(task, run);
+            findings = limit(task, runner.run(task, run));
         } catch (Exception e) {
             error = e;
         } finally {
@@ -65,7 +71,23 @@ public class TaskExecutor {
             String message = error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage();
             return report(task, Outcome.FAILED, () -> api.fail(task.taskId(), message));
         }
-        return report(task, Outcome.SUCCEEDED, () -> api.complete(task.taskId()));
+        List<Finding> submitted = findings;
+        return report(task, Outcome.SUCCEEDED, () -> api.complete(task.taskId(), submitted));
+    }
+
+    /** API가 받는 개수를 넘으면 위험도가 높은 것부터 남긴다 */
+    private static List<Finding> limit(ClaimedTask task, List<Finding> findings) {
+        if (findings == null) {
+            return List.of();
+        }
+        if (findings.size() <= MAX_FINDINGS) {
+            return findings;
+        }
+        log.warn("발견 항목이 {}건이라 {}건만 보냄: task={}", findings.size(), MAX_FINDINGS, task.taskId());
+        return findings.stream()
+            .sorted(Comparator.comparing(Finding::severity))
+            .limit(MAX_FINDINGS)
+            .toList();
     }
 
     private void sendHeartbeat(ClaimedTask task, Run run) {

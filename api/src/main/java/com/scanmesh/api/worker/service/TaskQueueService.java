@@ -3,13 +3,16 @@ package com.scanmesh.api.worker.service;
 import com.scanmesh.api.common.exception.BusinessException;
 import com.scanmesh.api.common.exception.ErrorCode;
 import com.scanmesh.api.scan.ScanProperties;
+import com.scanmesh.api.scan.entity.ScanFinding;
 import com.scanmesh.api.scan.entity.ScanTask;
+import com.scanmesh.api.scan.repository.ScanFindingRepository;
 import com.scanmesh.api.scan.repository.ScanTaskRepository;
 import com.scanmesh.api.target.entity.Target;
 import com.scanmesh.api.worker.dto.HeartbeatResponse;
 import com.scanmesh.api.worker.dto.TaskClaimResponse;
 import com.scanmesh.api.worker.repository.WorkerRepository;
 import com.scanmesh.api.worker.security.WorkerPrincipal;
+import com.scanmesh.common.finding.Finding;
 import com.scanmesh.common.scan.Engine;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +39,7 @@ public class TaskQueueService {
     static final int REAP_BATCH_SIZE = 100;
 
     private final ScanTaskRepository scanTaskRepository;
+    private final ScanFindingRepository findingRepository;
     private final WorkerRepository workerRepository;
     private final ScanProperties properties;
     private final Clock clock;
@@ -74,8 +78,13 @@ public class TaskQueueService {
         return new HeartbeatResponse(task.isCancelRequested(), task.getLeaseUntil());
     }
 
-    public void complete(WorkerPrincipal worker, Long taskId) {
-        held(worker, taskId).succeed(clock.instant());
+    /** 결과 저장과 작업 완료를 한 트랜잭션에서 한다. 저장하다 실패하면 작업도 끝나지 않아 다시 보고할 수 있다 */
+    public void complete(WorkerPrincipal worker, Long taskId, List<Finding> findings) {
+        ScanTask task = held(worker, taskId);
+        Instant now = clock.instant();
+        findingRepository.saveAll(findings.stream().map(finding -> new ScanFinding(task, finding, now)).toList());
+        task.succeed(now);
+        log.info("작업 완료: task={}, engine={}, 발견 {}건", task.getId(), task.getEngine(), findings.size());
     }
 
     public void fail(WorkerPrincipal worker, Long taskId, String errorMessage) {

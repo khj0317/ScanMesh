@@ -4,6 +4,7 @@ import com.scanmesh.api.worker.dto.HeartbeatRequest;
 import com.scanmesh.api.worker.dto.HeartbeatResponse;
 import com.scanmesh.api.worker.dto.TaskClaimRequest;
 import com.scanmesh.api.worker.dto.TaskClaimResponse;
+import com.scanmesh.api.worker.dto.TaskCompleteRequest;
 import com.scanmesh.api.worker.dto.TaskFailRequest;
 import com.scanmesh.api.worker.security.WorkerPrincipal;
 import com.scanmesh.api.worker.service.TaskQueueService;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /** 워커 전용 API. 사용자 JWT가 아니라 X-Worker-Token으로 인증한다 */
 @RestController
@@ -40,11 +43,15 @@ public class WorkerTaskController {
         return taskQueueService.heartbeat(worker, id, request.progress());
     }
 
-    /** 결과(발견 항목) 제출은 5주차에 이 요청의 본문으로 추가한다 */
+    /** 발견 항목을 함께 받는다. 본문이 없으면 발견한 것이 없는 것으로 본다 */
     @PostMapping("/{id}/complete")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void complete(@AuthenticationPrincipal WorkerPrincipal worker, @PathVariable Long id) {
-        taskQueueService.complete(worker, id);
+    public void complete(
+        @AuthenticationPrincipal WorkerPrincipal worker,
+        @PathVariable Long id,
+        @Valid @RequestBody(required = false) TaskCompleteRequest request
+    ) {
+        taskQueueService.complete(worker, id, request == null ? List.of() : request.toFindings());
     }
 
     @PostMapping("/{id}/fail")
