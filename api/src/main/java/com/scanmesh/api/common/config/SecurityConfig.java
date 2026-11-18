@@ -65,6 +65,8 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(allowedOrigins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        // 리프레시 토큰 쿠키를 주고받으려면 필요하다. 허용 출처를 와일드카드(*) 하나로 둘 수 없게 된다
+        config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", config);
         return source;

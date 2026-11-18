@@ -4,9 +4,11 @@ import com.scanmesh.api.common.security.SecretTokens;
 import com.scanmesh.api.worker.dto.WorkerCreateRequest;
 import com.scanmesh.api.worker.dto.WorkerCreatedResponse;
 import com.scanmesh.api.worker.dto.WorkerResponse;
+import com.scanmesh.api.worker.dto.WorkerStatusResponse;
 import com.scanmesh.api.worker.entity.Worker;
 import com.scanmesh.api.worker.repository.WorkerRepository;
 import com.scanmesh.api.worker.security.WorkerPrincipal;
+import com.scanmesh.common.scan.WorkerKind;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -43,6 +45,18 @@ public class WorkerService {
         return workerRepository.findAll(Sort.by("id")).stream()
             .map(worker -> WorkerResponse.from(worker, onlineSince))
             .toList();
+    }
+
+    /** 사용자 화면용. 워커가 꺼져 있으면 그 종류의 엔진 작업은 대기열에서 시작되지 않는다 */
+    public WorkerStatusResponse status() {
+        Instant onlineSince = clock.instant().minus(ONLINE_WINDOW);
+        List<Worker> workers = workerRepository.findAll();
+        return new WorkerStatusResponse(online(workers, WorkerKind.LIGHT, onlineSince), online(workers, WorkerKind.HEAVY, onlineSince));
+    }
+
+    private static boolean online(List<Worker> workers, WorkerKind kind, Instant onlineSince) {
+        return workers.stream().anyMatch(worker -> worker.getKind() == kind
+            && worker.getLastSeenAt() != null && worker.getLastSeenAt().isAfter(onlineSince));
     }
 
     /** 토큰이 맞으면 마지막 접속 시각을 남긴다. 화면의 '워커 오프라인' 표시에 쓴다 */

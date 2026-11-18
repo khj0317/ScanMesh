@@ -1,0 +1,671 @@
+{
+ "@programName": "ZAP",
+ "@version": "2.17.0",
+ "site": [
+  {
+   "@name": "https://127.0.0.1:8443",
+   "alerts": [
+    {
+     "pluginid": "20020",
+     "alertRef": "20020-3",
+     "alert": "Apache HTTP Server Version with Known Vulnerabilities",
+     "name": "Apache HTTP Server Version with Known Vulnerabilities",
+     "riskcode": "3",
+     "confidence": "1",
+     "cweid": "1395",
+     "solution": "<p>Upgrade Apache HTTP Server to a supported version which includes fixes for the listed vulnerabilities. Also configure the server not to disclose its version, e.g. by setting \"ServerTokens Prod\" and \"ServerSignature Off\".</p>",
+     "instances": [
+      {
+       "uri": "https://127.0.0.1:8443/?q=ZAP",
+       "method": "GET",
+       "param": "",
+       "evidence": "Apache/2.4.41"
+      }
+     ]
+    },
+    {
+     "pluginid": "20020",
+     "alertRef": "20020-1",
+     "alert": "PHP Version with Known Vulnerabilities",
+     "name": "PHP Version with Known Vulnerabilities",
+     "riskcode": "3",
+     "confidence": "2",
+     "cweid": "1395",
+     "solution": "<p>Upgrade PHP to a supported version which includes fixes for the listed vulnerabilities. Also configure the server not to disclose the PHP version, e.g. by setting \"expose_php = Off\" in php.ini and suppressing version details in the \"Server\" header.</p>",
+     "instances": [
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml?q=ZAP",
+       "method": "GET",
+       "param": "",
+       "evidence": "PHP/8.1.2"
+      }
+     ]
+    },
+    {
+     "pluginid": "10038",
+     "alertRef": "10038-1",
+     "alert": "Content Security Policy (CSP) Header Not Set",
+     "name": "Content Security Policy (CSP) Header Not Set",
+     "riskcode": "2",
+     "confidence": "3",
+     "cweid": "693",
+     "solution": "<p>Ensure that your web server, application server, load balancer, etc. is configured to set the Content-Security-Policy header.</p>",
+     "instances": [
+      {
+       "uri": "https://127.0.0.1:8443/",
+       "method": "GET",
+       "param": "",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/?q=ZAP",
+       "method": "GET",
+       "param": "",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page",
+       "method": "GET",
+       "param": "",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page?q=ZAP",
+       "method": "GET",
+       "param": "",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml?q=ZAP",
+       "method": "GET",
+       "param": "",
+       "evidence": ""
+      }
+     ]
+    },
+    {
+     "pluginid": "10020",
+     "alertRef": "10020-1",
+     "alert": "Missing Anti-clickjacking Header",
+     "name": "Missing Anti-clickjacking Header",
+     "riskcode": "2",
+     "confidence": "2",
+     "cweid": "1021",
+     "solution": "<p>Modern Web browsers support the Content-Security-Policy and X-Frame-Options HTTP headers. Ensure one of them is set on all web pages returned by your site/app.</p><p>If you expect the page to be framed only by pages on your server (e.g. it's part of a FRAMESET) then you'll want to use SAMEORIGIN, otherwise if you never expect the page to be framed, you should use DENY. Alternatively consider implementing Content Security Policy's \"frame-ancestors\" directive.</p>",
+     "instances": [
+      {
+       "uri": "https://127.0.0.1:8443/",
+       "method": "GET",
+       "param": "x-frame-options",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/?q=ZAP",
+       "method": "GET",
+       "param": "x-frame-options",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page",
+       "method": "GET",
+       "param": "x-frame-options",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page?q=ZAP",
+       "method": "GET",
+       "param": "x-frame-options",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml?q=ZAP",
+       "method": "GET",
+       "param": "x-frame-options",
+       "evidence": ""
+      }
+     ]
+    },
+    {
+     "pluginid": "10010",
+     "alertRef": "10010",
+     "alert": "Cookie No HttpOnly Flag",
+     "name": "Cookie No HttpOnly Flag",
+     "riskcode": "1",
+     "confidence": "2",
+     "cweid": "1004",
+     "solution": "<p>Ensure that the HttpOnly flag is set for all cookies.</p>",
+     "instances": [
+      {
+       "uri": "https://127.0.0.1:8443/",
+       "method": "GET",
+       "param": "sid",
+       "evidence": "Set-Cookie: sid"
+      },
+      {
+       "uri": "https://127.0.0.1:8443/?q=ZAP",
+       "method": "GET",
+       "param": "sid",
+       "evidence": "Set-Cookie: sid"
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page",
+       "method": "GET",
+       "param": "sid",
+       "evidence": "Set-Cookie: sid"
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page?q=ZAP",
+       "method": "GET",
+       "param": "sid",
+       "evidence": "Set-Cookie: sid"
+      },
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml?q=ZAP",
+       "method": "GET",
+       "param": "sid",
+       "evidence": "Set-Cookie: sid"
+      }
+     ]
+    },
+    {
+     "pluginid": "10011",
+     "alertRef": "10011",
+     "alert": "Cookie Without Secure Flag",
+     "name": "Cookie Without Secure Flag",
+     "riskcode": "1",
+     "confidence": "2",
+     "cweid": "614",
+     "solution": "<p>Whenever a cookie contains sensitive information or is a session token, then it should always be passed using an encrypted channel. Ensure that the secure flag is set for cookies containing such sensitive information.</p>",
+     "instances": [
+      {
+       "uri": "https://127.0.0.1:8443/",
+       "method": "GET",
+       "param": "sid",
+       "evidence": "Set-Cookie: sid"
+      },
+      {
+       "uri": "https://127.0.0.1:8443/?q=ZAP",
+       "method": "GET",
+       "param": "sid",
+       "evidence": "Set-Cookie: sid"
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page",
+       "method": "GET",
+       "param": "sid",
+       "evidence": "Set-Cookie: sid"
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page?q=ZAP",
+       "method": "GET",
+       "param": "sid",
+       "evidence": "Set-Cookie: sid"
+      },
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml?q=ZAP",
+       "method": "GET",
+       "param": "sid",
+       "evidence": "Set-Cookie: sid"
+      }
+     ]
+    },
+    {
+     "pluginid": "10054",
+     "alertRef": "10054-1",
+     "alert": "Cookie without SameSite Attribute",
+     "name": "Cookie without SameSite Attribute",
+     "riskcode": "1",
+     "confidence": "2",
+     "cweid": "1275",
+     "solution": "<p>Ensure that the SameSite attribute is set to either 'lax' or ideally 'strict' for all cookies.</p>",
+     "instances": [
+      {
+       "uri": "https://127.0.0.1:8443/",
+       "method": "GET",
+       "param": "sid",
+       "evidence": "Set-Cookie: sid"
+      },
+      {
+       "uri": "https://127.0.0.1:8443/?q=ZAP",
+       "method": "GET",
+       "param": "sid",
+       "evidence": "Set-Cookie: sid"
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page",
+       "method": "GET",
+       "param": "sid",
+       "evidence": "Set-Cookie: sid"
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page?q=ZAP",
+       "method": "GET",
+       "param": "sid",
+       "evidence": "Set-Cookie: sid"
+      },
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml?q=ZAP",
+       "method": "GET",
+       "param": "sid",
+       "evidence": "Set-Cookie: sid"
+      }
+     ]
+    },
+    {
+     "pluginid": "90004",
+     "alertRef": "90004-2",
+     "alert": "Cross-Origin-Embedder-Policy Header Missing or Invalid",
+     "name": "Cross-Origin-Embedder-Policy Header Missing or Invalid",
+     "riskcode": "1",
+     "confidence": "2",
+     "cweid": "693",
+     "solution": "<p>Ensure that the application/web server sets the Cross-Origin-Embedder-Policy header appropriately, and that it sets the Cross-Origin-Embedder-Policy header to 'require-corp' for documents.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Embedder-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-embedder-policy).</p>",
+     "instances": [
+      {
+       "uri": "https://127.0.0.1:8443/",
+       "method": "GET",
+       "param": "Cross-Origin-Embedder-Policy",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page",
+       "method": "GET",
+       "param": "Cross-Origin-Embedder-Policy",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page?q=ZAP",
+       "method": "GET",
+       "param": "Cross-Origin-Embedder-Policy",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml",
+       "method": "GET",
+       "param": "Cross-Origin-Embedder-Policy",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml?q=ZAP",
+       "method": "GET",
+       "param": "Cross-Origin-Embedder-Policy",
+       "evidence": ""
+      }
+     ]
+    },
+    {
+     "pluginid": "90004",
+     "alertRef": "90004-3",
+     "alert": "Cross-Origin-Opener-Policy Header Missing or Invalid",
+     "name": "Cross-Origin-Opener-Policy Header Missing or Invalid",
+     "riskcode": "1",
+     "confidence": "2",
+     "cweid": "693",
+     "solution": "<p>Ensure that the application/web server sets the Cross-Origin-Opener-Policy header appropriately, and that it sets the Cross-Origin-Opener-Policy header to 'same-origin' for documents.</p><p>'same-origin-allow-popups' is considered as less secured and should be avoided.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Opener-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-opener-policy).</p>",
+     "instances": [
+      {
+       "uri": "https://127.0.0.1:8443/",
+       "method": "GET",
+       "param": "Cross-Origin-Opener-Policy",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page",
+       "method": "GET",
+       "param": "Cross-Origin-Opener-Policy",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page?q=ZAP",
+       "method": "GET",
+       "param": "Cross-Origin-Opener-Policy",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml",
+       "method": "GET",
+       "param": "Cross-Origin-Opener-Policy",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml?q=ZAP",
+       "method": "GET",
+       "param": "Cross-Origin-Opener-Policy",
+       "evidence": ""
+      }
+     ]
+    },
+    {
+     "pluginid": "90004",
+     "alertRef": "90004-1",
+     "alert": "Cross-Origin-Resource-Policy Header Missing or Invalid",
+     "name": "Cross-Origin-Resource-Policy Header Missing or Invalid",
+     "riskcode": "1",
+     "confidence": "2",
+     "cweid": "693",
+     "solution": "<p>Ensure that the application/web server sets the Cross-Origin-Resource-Policy header appropriately, and that it sets the Cross-Origin-Resource-Policy header to 'same-origin' for all web pages.</p><p>'same-site' is considered as less secured and should be avoided.</p><p>If resources must be shared, set the header to 'cross-origin'.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Resource-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-resource-policy).</p>",
+     "instances": [
+      {
+       "uri": "https://127.0.0.1:8443/",
+       "method": "GET",
+       "param": "Cross-Origin-Resource-Policy",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page",
+       "method": "GET",
+       "param": "Cross-Origin-Resource-Policy",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page?q=ZAP",
+       "method": "GET",
+       "param": "Cross-Origin-Resource-Policy",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml",
+       "method": "GET",
+       "param": "Cross-Origin-Resource-Policy",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml?q=ZAP",
+       "method": "GET",
+       "param": "Cross-Origin-Resource-Policy",
+       "evidence": ""
+      }
+     ]
+    },
+    {
+     "pluginid": "10063",
+     "alertRef": "10063-1",
+     "alert": "Permissions Policy Header Not Set",
+     "name": "Permissions Policy Header Not Set",
+     "riskcode": "1",
+     "confidence": "2",
+     "cweid": "693",
+     "solution": "<p>Ensure that your web server, application server, load balancer, etc. is configured to set the Permissions-Policy header.</p>",
+     "instances": [
+      {
+       "uri": "https://127.0.0.1:8443/",
+       "method": "GET",
+       "param": "",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page",
+       "method": "GET",
+       "param": "",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/robots.txt",
+       "method": "GET",
+       "param": "",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml",
+       "method": "GET",
+       "param": "",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml?q=ZAP",
+       "method": "GET",
+       "param": "",
+       "evidence": ""
+      }
+     ]
+    },
+    {
+     "pluginid": "10037",
+     "alertRef": "10037",
+     "alert": "Server Leaks Information via \"X-Powered-By\" HTTP Response Header Field(s)",
+     "name": "Server Leaks Information via \"X-Powered-By\" HTTP Response Header Field(s)",
+     "riskcode": "1",
+     "confidence": "2",
+     "cweid": "497",
+     "solution": "<p>Ensure that your web server, application server, load balancer, etc. is configured to suppress \"X-Powered-By\" headers.</p>",
+     "instances": [
+      {
+       "uri": "https://127.0.0.1:8443/",
+       "method": "GET",
+       "param": "",
+       "evidence": "X-Powered-By: PHP/8.1.2"
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page",
+       "method": "GET",
+       "param": "",
+       "evidence": "X-Powered-By: PHP/8.1.2"
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page?q=ZAP",
+       "method": "GET",
+       "param": "",
+       "evidence": "X-Powered-By: PHP/8.1.2"
+      },
+      {
+       "uri": "https://127.0.0.1:8443/robots.txt",
+       "method": "GET",
+       "param": "",
+       "evidence": "X-Powered-By: PHP/8.1.2"
+      },
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml",
+       "method": "GET",
+       "param": "",
+       "evidence": "X-Powered-By: PHP/8.1.2"
+      }
+     ]
+    },
+    {
+     "pluginid": "10036",
+     "alertRef": "10036-2",
+     "alert": "Server Leaks Version Information via \"Server\" HTTP Response Header Field",
+     "name": "Server Leaks Version Information via \"Server\" HTTP Response Header Field",
+     "riskcode": "1",
+     "confidence": "3",
+     "cweid": "497",
+     "solution": "<p>Ensure that your web server, application server, load balancer, etc. is configured to suppress the \"Server\" header or provide generic details.</p>",
+     "instances": [
+      {
+       "uri": "https://127.0.0.1:8443/",
+       "method": "GET",
+       "param": "",
+       "evidence": "Apache/2.4.41 (Ubuntu)"
+      },
+      {
+       "uri": "https://127.0.0.1:8443/?q=ZAP",
+       "method": "GET",
+       "param": "",
+       "evidence": "Apache/2.4.41 (Ubuntu)"
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page?q=ZAP",
+       "method": "GET",
+       "param": "",
+       "evidence": "Apache/2.4.41 (Ubuntu)"
+      },
+      {
+       "uri": "https://127.0.0.1:8443/robots.txt",
+       "method": "GET",
+       "param": "",
+       "evidence": "Apache/2.4.41 (Ubuntu)"
+      },
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml",
+       "method": "GET",
+       "param": "",
+       "evidence": "Apache/2.4.41 (Ubuntu)"
+      }
+     ]
+    },
+    {
+     "pluginid": "10035",
+     "alertRef": "10035-1",
+     "alert": "Strict-Transport-Security Header Not Set",
+     "name": "Strict-Transport-Security Header Not Set",
+     "riskcode": "1",
+     "confidence": "3",
+     "cweid": "319",
+     "solution": "<p>Ensure that your web server, application server, load balancer, etc. is configured to enforce Strict-Transport-Security.</p>",
+     "instances": [
+      {
+       "uri": "https://127.0.0.1:8443/",
+       "method": "GET",
+       "param": "",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page",
+       "method": "GET",
+       "param": "",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page?q=ZAP",
+       "method": "GET",
+       "param": "",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/robots.txt",
+       "method": "GET",
+       "param": "",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml",
+       "method": "GET",
+       "param": "",
+       "evidence": ""
+      }
+     ]
+    },
+    {
+     "pluginid": "10021",
+     "alertRef": "10021",
+     "alert": "X-Content-Type-Options Header Missing",
+     "name": "X-Content-Type-Options Header Missing",
+     "riskcode": "1",
+     "confidence": "2",
+     "cweid": "693",
+     "solution": "<p>Ensure that the application/web server sets the Content-Type header appropriately, and that it sets the X-Content-Type-Options header to 'nosniff' for all web pages.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that does not perform MIME-sniffing at all, or that can be directed by the web application/web server to not perform MIME-sniffing.</p>",
+     "instances": [
+      {
+       "uri": "https://127.0.0.1:8443/",
+       "method": "GET",
+       "param": "x-content-type-options",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page",
+       "method": "GET",
+       "param": "x-content-type-options",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page?q=ZAP",
+       "method": "GET",
+       "param": "x-content-type-options",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/robots.txt",
+       "method": "GET",
+       "param": "x-content-type-options",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml",
+       "method": "GET",
+       "param": "x-content-type-options",
+       "evidence": ""
+      }
+     ]
+    },
+    {
+     "pluginid": "10015",
+     "alertRef": "10015",
+     "alert": "Re-examine Cache-control Directives",
+     "name": "Re-examine Cache-control Directives",
+     "riskcode": "0",
+     "confidence": "1",
+     "cweid": "525",
+     "solution": "<p>For secure content, ensure the cache-control HTTP header is set with \"no-cache, no-store, must-revalidate\". If an asset should be cached consider setting the directives \"public, max-age, immutable\".</p>",
+     "instances": [
+      {
+       "uri": "https://127.0.0.1:8443/",
+       "method": "GET",
+       "param": "cache-control",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page",
+       "method": "GET",
+       "param": "cache-control",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page?q=ZAP",
+       "method": "GET",
+       "param": "cache-control",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml",
+       "method": "GET",
+       "param": "cache-control",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml?q=ZAP",
+       "method": "GET",
+       "param": "cache-control",
+       "evidence": ""
+      }
+     ]
+    },
+    {
+     "pluginid": "10049",
+     "alertRef": "10049-3",
+     "alert": "Storable and Cacheable Content",
+     "name": "Storable and Cacheable Content",
+     "riskcode": "0",
+     "confidence": "2",
+     "cweid": "524",
+     "solution": "<p>Validate that the response does not contain sensitive, personal or user-specific information. If it does, consider the use of the following HTTP response headers, to limit, or prevent the content being stored and retrieved from the cache by another user:</p><p>Cache-Control: no-cache, no-store, must-revalidate, private</p><p>Pragma: no-cache</p><p>Expires: 0</p><p>This configuration directs both HTTP 1.0 and HTTP 1.1 compliant caching servers to not store the response, and to not retrieve the response (without validation) from the cache, in response to a similar request.</p>",
+     "instances": [
+      {
+       "uri": "https://127.0.0.1:8443/",
+       "method": "GET",
+       "param": "",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/page?q=ZAP",
+       "method": "GET",
+       "param": "",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/robots.txt",
+       "method": "GET",
+       "param": "",
+       "evidence": ""
+      },
+      {
+       "uri": "https://127.0.0.1:8443/sitemap.xml",
+       "method": "GET",
+       "param": "",
+       "evidence": ""
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

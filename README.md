@@ -12,19 +12,29 @@
 | `common` | API와 워커가 함께 쓰는 코드: 점검 엔진 종류, 작업 상태 전이 규칙, SSRF 방어용 주소 검사 |
 | `api` | 회원, 점검 대상, 점검 요청, 작업 큐, 결과 저장 (Spring Boot, 포트 8090) |
 | `worker` | API에서 작업을 가져와 점검 엔진을 실행 (내 PC에서 실행, Nuclei와 ZAP은 Docker 컨테이너로 띄움) |
+| `web` | 화면: 로그인, 점검 대상 등록과 소유 인증, 점검 요청과 진행 상황, 결과 (React, 포트 5181) |
 | `lab` | 0주차 점검 엔진 실험 환경과 측정 결과 |
 
 설계(ERD, 상태 흐름, API, SSRF 방어, 주요 결정)는 [docs/design.md](docs/design.md)에 있습니다.
 
 ## 로컬 실행
 
-Java 21과 Docker가 필요합니다.
+Java 21, Node.js 24, Docker가 필요합니다.
 
 ```bash
 docker compose up -d          # Postgres (localhost:5434)
 ./gradlew :api:bootRun        # API 서버 (http://localhost:8090/swagger-ui.html)
 ./gradlew :worker:bootRun     # 워커
 ./gradlew build               # 전체 빌드와 테스트 (테스트는 Testcontainers로 Postgres를 띄움)
+```
+
+화면은 따로 띄웁니다. API 주소는 `VITE_API_URL`로 바꿀 수 있고 기본값은 `http://localhost:8090`입니다.
+
+```bash
+cd web
+npm install
+npm run dev                   # http://localhost:5181
+npm test                      # API 클라이언트 테스트
 ```
 
 ### 워커 등록
@@ -74,4 +84,5 @@ DEV_ALLOWED_HOSTS=localhost,juice-shop,host.docker.internal ./gradlew :api:bootR
 - [x] 3주차: 점검 요청·취소, PostgreSQL 작업 큐(`SKIP LOCKED`), 워커 API와 작업 루프, 임대·하트비트·재시도
 - [x] 4주차: 점검 엔진 연동 (자체 규칙, Nuclei, ZAP), DNS 고정, 대상 무응답 시 중단
 - [x] 5주차: 엔진 결과를 공통 형식으로 통합, 엔진 간 중복 묶기, OWASP Top 10 분류, 결과 조회 API
-- [ ] 6주차: 화면
+- [x] 6주차: 화면 (로그인, 대상 등록과 소유 인증, 점검 요청·진행 상황·취소, 결과), 워커 오프라인 표시
+- [ ] 7주차: 배포 (Vercel, Render, Supabase)

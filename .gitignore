@@ -6,4 +6,5 @@ worker-results/
 .vscode/
 build/
 node_modules/
+dist/
 .gradle/

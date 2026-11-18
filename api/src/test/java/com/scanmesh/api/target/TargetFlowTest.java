@@ -193,6 +193,11 @@ class TargetFlowTest extends IntegrationTest {
 
         mockMvc.perform(get("/api/targets").header("Authorization", bearer(other)))
             .andExpect(jsonPath("$", hasSize(0)));
+        mockMvc.perform(get("/api/targets/" + id).header("Authorization", bearer(other)))
+            .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/targets/" + id).header("Authorization", bearer(owner)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(id));
         verify(other, id)
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.code").value("TARGET_NOT_FOUND"));

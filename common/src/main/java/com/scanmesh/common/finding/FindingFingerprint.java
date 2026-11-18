@@ -18,9 +18,9 @@ public final class FindingFingerprint {
 
     /**
      * 여러 엔진이 함께 하는 검사를 같은 이름으로 묶는다. 표에 없는 규칙은 "엔진:규칙 ID"가 그대로 이름이 된다.
-     * ZAP 값은 ZAP 2.17의 실제 보고서에서 확인했다(worker 테스트의 zap/header-less-site.json). 단, HSTS(10035-1)와
-     * 쿠키 Secure(10011)는 https에서만 나와 확인하지 못했고, Nuclei 값은 템플릿 문서를 따랐다.
-     * 규칙 ID가 바뀌면 묶이지 않고 따로 보일 뿐, 결과가 사라지지는 않는다.
+     * 값은 모두 보안 헤더 없는 시험 페이지를 ZAP 2.17(http, https)과 Nuclei의 http-missing-security-headers 템플릿으로
+     * 점검한 실제 결과에서 확인했다(worker 테스트의 zap/, nuclei/ 예제). 엔진이 바뀌어 규칙 ID가 달라지면
+     * 묶이지 않고 따로 보일 뿐, 결과가 사라지지는 않는다.
      */
     private static final Map<String, String> SHARED_CHECKS = Map.ofEntries(
         Map.entry("CUSTOM:MISSING_CSP", "missing-csp"),
@@ -38,6 +38,16 @@ public final class FindingFingerprint {
         Map.entry("CUSTOM:MISSING_FRAME_PROTECTION", "missing-frame-protection"),
         Map.entry("ZAP:10020-1", "missing-frame-protection"),
         Map.entry("NUCLEI:http-missing-security-headers:x-frame-options", "missing-frame-protection"),
+
+        // 자체 규칙에는 없고 ZAP과 Nuclei가 함께 하는 헤더 검사
+        Map.entry("ZAP:90004-1", "missing-cross-origin-resource-policy"),
+        Map.entry("NUCLEI:http-missing-security-headers:cross-origin-resource-policy", "missing-cross-origin-resource-policy"),
+        Map.entry("ZAP:90004-2", "missing-cross-origin-embedder-policy"),
+        Map.entry("NUCLEI:http-missing-security-headers:cross-origin-embedder-policy", "missing-cross-origin-embedder-policy"),
+        Map.entry("ZAP:90004-3", "missing-cross-origin-opener-policy"),
+        Map.entry("NUCLEI:http-missing-security-headers:cross-origin-opener-policy", "missing-cross-origin-opener-policy"),
+        Map.entry("ZAP:10063-1", "missing-permissions-policy"),
+        Map.entry("NUCLEI:http-missing-security-headers:permissions-policy", "missing-permissions-policy"),
 
         // 자체 규칙은 헤더 이름을 위치(param)로 남기므로 아래 checkName에서 헤더별로 나눈다
         Map.entry("ZAP:10036-1", "version-disclosure:server"),

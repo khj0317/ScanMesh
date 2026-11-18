@@ -137,7 +137,7 @@ public class TargetService {
         return new VerificationResponse(outcome.verified(), outcome.detail(), target);
     }
 
-    private TargetResponse get(Long memberId, Long targetId) {
+    public TargetResponse get(Long memberId, Long targetId) {
         return transaction.execute(status -> TargetResponse.from(find(memberId, targetId)));
     }
 

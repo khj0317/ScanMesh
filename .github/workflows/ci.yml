@@ -1,4 +1,4 @@
-# 푸시·PR마다 전체 모듈을 빌드하고 테스트한다.
+# 푸시·PR마다 전체 모듈과 화면(web)을 빌드하고 테스트한다.
 # API 테스트는 Testcontainers로 실제 Postgres를 띄워 마이그레이션과 행 잠금까지 확인한다
 name: CI
 
@@ -25,3 +25,20 @@ jobs:
         with:
           name: test-reports
           path: '*/build/reports/tests/test'
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      # 타입 검사와 빌드, API 클라이언트 테스트
+      - run: npm run build
+      - run: npm test

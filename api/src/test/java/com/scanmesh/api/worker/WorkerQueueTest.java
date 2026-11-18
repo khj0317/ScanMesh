@@ -239,6 +239,22 @@ class WorkerQueueTest extends ScanIntegrationTest {
             .andExpect(jsonPath("$[?(@.online == true)]", hasSize(org.hamcrest.Matchers.greaterThanOrEqualTo(1))));
     }
 
+    @Test
+    void 사용자는_워커_종류별로_켜져_있는지만_본다() throws Exception {
+        String user = memberToken();
+        jdbcTemplate.update("update workers set last_seen_at = null");
+
+        mockMvc.perform(get("/api/workers/status").header("Authorization", bearer(user)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.lightOnline").value(false))
+            .andExpect(jsonPath("$.heavyOnline").value(false));
+
+        claim(registerWorker("LIGHT"), "CUSTOM");
+        mockMvc.perform(get("/api/workers/status").header("Authorization", bearer(user)))
+            .andExpect(jsonPath("$.lightOnline").value(true))
+            .andExpect(jsonPath("$.heavyOnline").value(false));
+    }
+
     private long claimedTaskId(String worker) throws Exception {
         String json = claim(worker, "CUSTOM", "NUCLEI").andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         return longField(json, "taskId");

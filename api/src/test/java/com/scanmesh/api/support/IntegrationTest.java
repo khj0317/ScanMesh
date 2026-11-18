@@ -7,6 +7,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.UUID;
@@ -50,11 +51,16 @@ public abstract class IntegrationTest {
 
     /** 로그인해서 받은 응답 본문(JSON) */
     protected String login(String email) throws Exception {
+        return loginResult(email).getResponse().getContentAsString();
+    }
+
+    /** 리프레시 토큰은 쿠키로 오므로, 쿠키까지 보려면 응답 전체를 받는다 */
+    protected MvcResult loginResult(String email) throws Exception {
         return postJson("/api/auth/login", """
             {"email":"%s","password":"%s"}
             """.formatted(email, PASSWORD))
             .andExpect(status().isOk())
-            .andReturn().getResponse().getContentAsString();
+            .andReturn();
     }
 
     /** 새 회원으로 가입하고 로그인해서 받은 액세스 토큰 */

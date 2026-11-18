@@ -5,6 +5,9 @@ jwt:
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS}
+  auth:
+    # 배포는 https이므로 항상 켠다
+    cookie-secure: true
 
 springdoc:
   # 배포에서는 API 문서 화면을 닫는다

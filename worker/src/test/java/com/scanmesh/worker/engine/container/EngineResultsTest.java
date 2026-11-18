@@ -111,6 +111,58 @@ class EngineResultsTest {
             "VERSION_DISCLOSURE", "COOKIE_NO_HTTPONLY", "COOKIE_NO_SAMESITE");
     }
 
+    /** 같은 시험 페이지를 https로 연 것. HSTS와 쿠키 Secure는 https에서만 나온다 */
+    @Test
+    void https_실제_ZAP_보고서와_자체_규칙의_같은_문제는_지문이_같다() throws Exception {
+        Set<String> zap = ZapReport.parse(resource("/zap/header-less-site-https.json"), 500).stream()
+            .map(finding -> FindingFingerprint.of(Engine.ZAP, finding))
+            .collect(Collectors.toSet());
+
+        List<Finding> custom = CustomRulesProbe.evaluate(URI.create("https://127.0.0.1:8443/"), headerLessResponse());
+
+        assertThat(custom).extracting(Finding::ruleId).contains("MISSING_HSTS", "COOKIE_NO_SECURE");
+        assertThat(custom).allSatisfy(finding -> assertThat(zap)
+            .as(finding.ruleId() + " " + finding.param())
+            .contains(FindingFingerprint.of(Engine.CUSTOM, finding)));
+    }
+
+    @Test
+    void 실제_Nuclei_보안_헤더_결과는_자체_규칙_ZAP과_같은_검사로_묶인다() throws Exception {
+        List<Finding> nuclei = NucleiResults.parse(resource("/nuclei/header-less-site.jsonl"), 500);
+        Set<String> nucleiChecks = nuclei.stream()
+            .map(finding -> FindingFingerprint.checkName(Engine.NUCLEI, finding.ruleId(), finding.param()))
+            .collect(Collectors.toSet());
+        Set<String> nucleiPrints = nuclei.stream()
+            .map(finding -> FindingFingerprint.of(Engine.NUCLEI, finding))
+            .collect(Collectors.toSet());
+
+        assertThat(nucleiChecks).contains("missing-csp", "missing-hsts", "missing-frame-protection", "missing-x-content-type-options",
+            "missing-cross-origin-resource-policy", "missing-cross-origin-embedder-policy", "missing-cross-origin-opener-policy",
+            "missing-permissions-policy");
+        // 같은 http 페이지를 자체 규칙과 ZAP으로 본 결과 중 Nuclei도 하는 검사는 지문까지 같다
+        List<Finding> custom = CustomRulesProbe.evaluate(URI.create("http://127.0.0.1:8000/"), headerLessResponse());
+        assertThat(custom).filteredOn(finding -> finding.ruleId().startsWith("MISSING_"))
+            .isNotEmpty()
+            .allSatisfy(finding -> assertThat(nucleiPrints).contains(FindingFingerprint.of(Engine.CUSTOM, finding)));
+        ZapReport.parse(resource("/zap/header-less-site.json"), 500).stream()
+            .filter(finding -> finding.ruleId().startsWith("90004") || finding.ruleId().equals("10063-1"))
+            // Nuclei는 첫 화면만 보고, ZAP은 둘러보다 찾은 /page까지 본다
+            .filter(finding -> URI.create(finding.url()).getPath().equals("/"))
+            .forEach(finding -> assertThat(nucleiPrints).contains(FindingFingerprint.of(Engine.ZAP, finding)));
+    }
+
+    private static TargetFetcher.Response headerLessResponse() {
+        return new TargetFetcher.Response(200, Map.of(
+            "set-cookie", List.of("sid=abc123; Path=/"),
+            "server", List.of("Apache/2.4.41 (Ubuntu)"),
+            "x-powered-by", List.of("PHP/8.1.2")
+        ), "", null);
+    }
+
+    private Path resource(String name) throws Exception {
+        return Path.of(getClass().getResource(name).toURI());
+    }
+
     @Test
     void ZAP_경고_하나에_URL이_많으면_20개까지만_남기고_전체도_제한한다() throws Exception {
         String instances = IntStream.range(0, 30)

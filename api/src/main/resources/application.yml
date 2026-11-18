@@ -41,7 +41,10 @@ jwt:
 app:
   # 여러 개면 쉼표로 구분, * 패턴 가능 (예: https://scanmesh-*.vercel.app)
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5180}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5181}
+  auth:
+    # 리프레시 토큰 쿠키의 Secure 속성. http인 로컬 개발에서는 꺼야 브라우저가 쿠키를 저장한다
+    cookie-secure: ${AUTH_COOKIE_SECURE:false}
   targets:
     # 개발용. 여기 적은 호스트는 내부 주소여도 등록되고 바로 인증된다 (예: localhost,juice-shop,host.docker.internal)
     # 배포(prod)에서 값이 있으면 서버가 뜨지 않는다

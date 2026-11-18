@@ -38,6 +38,11 @@ public class TargetController {
         return targetService.list(principal.memberId());
     }
 
+    @GetMapping("/{id}")
+    public TargetResponse get(@AuthenticationPrincipal MemberPrincipal principal, @PathVariable Long id) {
+        return targetService.get(principal.memberId(), id);
+    }
+
     @PostMapping("/{id}/verify")
     public VerificationResponse verify(@AuthenticationPrincipal MemberPrincipal principal, @PathVariable Long id) {
         return targetService.verify(principal.memberId(), id);
