@@ -21,8 +21,9 @@ spring:
       enabled: true
 
 server:
-  # StoreFit(8080), FitMate(8081·8082)와 겹치지 않게 8090을 쓴다
-  port: ${PORT:8090}
+  # StoreFit(8080), FitMate(8081·8082)와 겹치지 않고, Windows가 예약해 두는 포트 범위(재부팅마다 바뀌며 8053~8152가 잡힌 적 있음)를
+  # 피하려고 8190을 쓴다. 포트를 열 수 없다는 오류가 나면 PORT로 바꾼다 (확인: netsh interface ipv4 show excludedportrange protocol=tcp)
+  port: ${PORT:8190}
   # Render 같은 프록시 뒤에서 https 주소를 올바르게 인식한다
   forward-headers-strategy: native
 

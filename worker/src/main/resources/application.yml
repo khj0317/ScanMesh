@@ -9,7 +9,7 @@ spring:
       enabled: true
 
 worker:
-  api-url: ${WORKER_API_URL:http://localhost:8090}
+  api-url: ${WORKER_API_URL:http://localhost:8190}
   token: ${WORKER_TOKEN:}
   kind: ${WORKER_KIND:LIGHT}
   poll-interval: ${WORKER_POLL_INTERVAL:10s}

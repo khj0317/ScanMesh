@@ -1,0 +1,11 @@
+# API 이미지 빌드에 필요 없는 것. 특히 로컬 빌드 결과와 점검 결과 파일이 이미지에 들어가지 않게 한다
+**/build
+**/.gradle
+.git
+web
+lab
+docs
+worker/src
+worker/worker-results
+*.log
+.env

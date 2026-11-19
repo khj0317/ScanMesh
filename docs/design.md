@@ -7,7 +7,7 @@
 ```mermaid
 flowchart LR
     user[사용자 브라우저] --> web[React 화면<br/>Vercel]
-    web --> api[API 서버<br/>Render]
+    web -- "/api 넘김" --> api[API 서버<br/>Render]
     api <--> db[(PostgreSQL<br/>Supabase<br/>작업 큐 포함)]
     subgraph pc[내 PC · Docker]
         light[가벼운 워커<br/>자체 규칙 · Nuclei]
@@ -330,8 +330,8 @@ React(Vite, TypeScript)로 만들고 `web/` 폴더에 둡니다. 배포하면 Ve
   XSS가 생겨도 오래 쓰는 토큰은 빼 갈 수 없고, 새로 고침하면 쿠키로 액세스 토큰을 다시 받아 로그인을 되살립니다.
   - `SameSite=Strict`: 다른 사이트에서 보낸 요청에는 실리지 않아 CSRF로 토큰을 돌릴 수 없습니다.
   - `Path=/api/auth`: 로그인 유지 요청에만 실립니다. `Secure`는 배포(https)에서만 켭니다.
-  - 개발 환경의 `localhost:5181` → `localhost:8090`은 포트만 달라 같은 사이트로 봅니다. 배포에서는 Vercel이 `/api`를 Render의 API로 넘겨(rewrite)
-    같은 출처로 만들어야 합니다. 다른 사이트의 쿠키(서드 파티 쿠키)는 브라우저가 막는 추세라 `SameSite=None`으로 풀지 않습니다(7주차).
+  - 개발 환경의 `localhost:5181` → `localhost:8190`은 포트만 달라 같은 사이트로 봅니다. 배포에서는 Vercel이 `/api`를 Render의 API로 넘겨(rewrite)
+    같은 출처로 만듭니다(`web/vercel.json`). 다른 사이트의 쿠키(서드 파티 쿠키)는 브라우저가 막는 추세라 `SameSite=None`으로 풀지 않습니다. 배포 순서는 [deploy.md](deploy.md)에 있습니다.
 - 서버는 버린 리프레시 토큰이 다시 오면 탈취로 보고 모든 로그인을 끊습니다. 그래서 여러 요청이 동시에 401을 받아도 리프레시는 한 번만 보내고,
   탭이 여러 개면 Web Locks로 차례를 정합니다. 쿠키는 탭끼리 공유되므로 차례를 기다린 탭은 앞 탭이 바꿔 둔 새 쿠키로 요청합니다(`web/src/api/client.ts`, 테스트 포함).
 - 점검 결과는 점검이 끝나기 전에도 끝난 엔진의 것부터 보여 줍니다.
@@ -349,6 +349,7 @@ React(Vite, TypeScript)로 만들고 `web/` 폴더에 둡니다. 배포하면 Ve
 | 검사한 IP로 그대로 연결하는 HTTP 클라이언트 (Apache HttpClient의 DNS 조회 단계에서 검사) | 검사할 때와 연결할 때 DNS를 따로 조회하면 그 사이에 응답을 내부 주소로 바꿀 수 있음 | 요청 전에 `InetAddress`로 한 번 검사: DNS 리바인딩에 뚫림. JDK `HttpClient`: DNS 조회를 바꿔 끼울 수 없음 |
 | 대상마다 끝나지 않은 점검은 하나만, 점검 요청 때 대상 행을 잠금 | 같은 사이트를 여러 엔진이 겹쳐 점검하면 0주차처럼 대상 앱이 죽을 수 있음. 잠그지 않으면 동시에 요청할 때 둘 다 통과함 | - |
 | 워커는 작업을 한 번에 하나씩 실행 | 엔진 하나가 1GB 가까이 쓰므로 내 PC에서 동시에 여러 개를 돌리지 않음. 더 돌리려면 워커를 늘림 | 워커 안에서 동시 실행: 메모리 관리가 어려움 |
+| 화면이 /api를 같은 출처로 부르고 Vercel이 Render로 넘김 | 리프레시 토큰 쿠키(SameSite=Strict)가 실리고, CORS 사전 요청도 없어짐 | 화면에서 Render 주소를 바로 부르기: 다른 사이트라 쿠키가 실리지 않음 |
 | 워커는 내 PC에서 직접 실행하고 엔진만 컨테이너로 띄움 | 워커까지 컨테이너에 넣으면 Docker 소켓을 넘겨야 하고, 그러면 워커가 내 PC의 Docker 전체를 제어할 수 있게 됨 | 워커도 컨테이너로: Docker 소켓 노출 |
 | 리프레시 토큰은 HttpOnly·SameSite=Strict 쿠키로, 배포는 같은 출처로 프록시 | XSS로 토큰을 빼 갈 수 없고 CSRF도 막힘. 동시 리프레시는 한 번만(토큰 회전과 탈취 감지) | localStorage: XSS 한 번이면 14일짜리 토큰이 새어 나감. SameSite=None 쿠키: 서드 파티 쿠키 차단에 걸림. 메모리에만: 새로 고침마다 다시 로그인 |
 | 발견 항목을 작업 완료 보고에 함께 실음 | 결과 저장과 작업 완료가 한 트랜잭션이라, 결과만 남고 작업은 실패하거나 재시도가 결과를 두 번 남기는 일이 없음 | 결과를 따로 올리는 API: 완료와 결과 사이가 어긋날 수 있음 |

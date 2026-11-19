@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { ApiClient } from '../api/client';
 import type { Member } from '../api/types';
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8090';
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8190';
 
 interface AuthState {
   api: ApiClient;
