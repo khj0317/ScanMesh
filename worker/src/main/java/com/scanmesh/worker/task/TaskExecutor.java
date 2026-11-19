@@ -5,6 +5,7 @@ import com.scanmesh.worker.api.ClaimedTask;
 import com.scanmesh.worker.api.LeaseLostException;
 import com.scanmesh.worker.api.WorkerApi;
 import com.scanmesh.worker.engine.EngineRunner;
+import com.scanmesh.worker.engine.ScanFailure;
 import com.scanmesh.worker.engine.TaskContext;
 import lombok.extern.slf4j.Slf4j;
 
@@ -68,7 +69,9 @@ public class TaskExecutor {
         }
         if (error != null) {
             log.warn("엔진 실패: task={}, engine={}", task.taskId(), task.engine(), error);
-            String message = error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage();
+            // 이 메시지는 사용자 화면에 보인다. 사용자에게 보이려고 만든 실패만 그대로 보내고, 나머지는 Docker 출력이나
+            // 워커 PC의 경로가 섞일 수 있어 일반 문구로 바꾼다. 자세한 내용은 위 워커 로그에 남는다
+            String message = error instanceof ScanFailure ? error.getMessage() : "점검 엔진을 실행하지 못했습니다. 워커 로그를 확인해 주세요.";
             return report(task, Outcome.FAILED, () -> api.fail(task.taskId(), message));
         }
         List<Finding> submitted = findings;

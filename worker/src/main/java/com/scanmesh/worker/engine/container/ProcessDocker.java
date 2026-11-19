@@ -3,9 +3,11 @@ package com.scanmesh.worker.engine.container;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /** docker 명령을 프로세스로 실행한다. 셸을 거치지 않으므로 대상 주소가 명령으로 해석될 일이 없다 */
@@ -29,6 +31,24 @@ class ProcessDocker implements ContainerRunner.Docker {
                 return process.exitValue();
             }
         };
+    }
+
+    @Override
+    public ExecResult exec(List<String> command, Duration timeout) throws IOException, InterruptedException {
+        Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
+        // 출력이 많으면 다 읽기 전에 프로세스가 멈출 수 있으므로 기다리는 동안 따로 읽는다
+        CompletableFuture<String> output = CompletableFuture.supplyAsync(() -> {
+            try {
+                return new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                return "";
+            }
+        });
+        if (!process.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
+            process.destroyForcibly();
+            throw new IOException("docker 명령이 " + timeout + " 안에 끝나지 않았습니다: " + String.join(" ", command));
+        }
+        return new ExecResult(process.exitValue(), output.join());
     }
 
     @Override

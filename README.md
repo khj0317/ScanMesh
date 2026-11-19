@@ -53,6 +53,7 @@ WORKER_TOKEN=받은토큰 WORKER_KIND=LIGHT ./gradlew :worker:bootRun
 ```
 
 LIGHT 워커는 자체 규칙과 Nuclei를, HEAVY 워커는 ZAP을 실행하므로 전체 엔진을 쓰려면 두 대를 띄웁니다. Docker가 켜져 있어야 합니다.
+엔진은 바깥으로 못 나가는 내부 네트워크에서 돌고 작업마다 띄우는 출구 프록시로만 대상에 닿습니다. 필요한 네트워크와 이미지는 워커가 처음 점검할 때 만듭니다.
 
 Nuclei 템플릿은 처음 한 번 받아 둡니다([lab/README.md](lab/README.md)의 템플릿 받기 명령). 기본 볼륨은 `scanmesh-lab_nuclei-templates`이고,
 다른 볼륨을 쓰면 `WORKER_NUCLEI_TEMPLATES_VOLUME`으로 지정합니다.

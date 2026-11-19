@@ -7,10 +7,12 @@ import com.scanmesh.worker.api.ClaimedTask;
 import com.scanmesh.worker.api.LeaseLostException;
 import com.scanmesh.worker.api.WorkerApi;
 import com.scanmesh.worker.engine.EngineRunner;
+import com.scanmesh.worker.engine.ScanFailure;
 import com.scanmesh.worker.engine.TaskContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
@@ -43,13 +45,23 @@ class TaskExecutorTest {
     }
 
     @Test
-    void 엔진이_실패하면_오류_메시지와_함께_실패를_보고한다() {
+    void 엔진이_사용자에게_보일_실패를_내면_그_메시지로_보고한다() {
         TaskExecutor.Outcome outcome = executor.execute(TASK, runner((task, context) -> {
-            throw new IllegalStateException("nuclei 종료 코드 2");
+            throw new ScanFailure("Nuclei가 종료 코드 2로 끝났습니다.");
         }), null);
 
         assertThat(outcome).isEqualTo(TaskExecutor.Outcome.FAILED);
-        assertThat(api.calls).containsExactly("fail:7:nuclei 종료 코드 2");
+        assertThat(api.calls).containsExactly("fail:7:Nuclei가 종료 코드 2로 끝났습니다.");
+    }
+
+    @Test
+    void 그_밖의_예외는_내부_정보가_새지_않게_일반_문구로_보고한다() {
+        TaskExecutor.Outcome outcome = executor.execute(TASK, runner((task, context) -> {
+            throw new IOException("docker: Error response from daemon: mounts denied: /c/project/scanmesh/worker-results/scan-1");
+        }), null);
+
+        assertThat(outcome).isEqualTo(TaskExecutor.Outcome.FAILED);
+        assertThat(api.calls).containsExactly("fail:7:점검 엔진을 실행하지 못했습니다. 워커 로그를 확인해 주세요.");
     }
 
     @Test

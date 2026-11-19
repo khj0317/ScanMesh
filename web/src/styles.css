@@ -545,6 +545,7 @@ table {
 
 th {
   text-align: left;
+  white-space: nowrap;
   font-weight: 600;
   color: var(--muted);
   font-size: 0.8rem;

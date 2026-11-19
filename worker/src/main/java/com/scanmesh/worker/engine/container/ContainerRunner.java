@@ -2,6 +2,7 @@ package com.scanmesh.worker.engine.container;
 
 import com.scanmesh.worker.api.ClaimedTask;
 import com.scanmesh.worker.engine.EngineProperties;
+import com.scanmesh.worker.engine.ScanFailure;
 import com.scanmesh.worker.engine.TaskContext;
 import com.scanmesh.worker.engine.http.TargetFetcher;
 import com.scanmesh.worker.engine.http.TargetFetcherFactory;
@@ -19,6 +20,7 @@ import java.util.Set;
 
 /**
  * 점검 엔진을 Docker 컨테이너로 실행하고 끝날 때까지 지켜본다.
+ * 엔진은 바깥으로 나갈 수 없는 내부 네트워크에서 돌고, 작업마다 띄우는 출구 프록시로만 대상에 닿는다(EgressSandbox).
  * 취소되거나 시간을 넘기거나 대상이 응답하지 않으면 컨테이너를 지운다. docker 명령만 끝내면 컨테이너는 계속 돌기 때문이다.
  */
 @Slf4j
@@ -37,22 +39,34 @@ public class ContainerRunner {
     private final Docker docker;
     private final EngineProperties properties;
     private final TargetFetcherFactory fetchers;
+    private final EgressSandbox sandbox;
 
     @Autowired
-    public ContainerRunner(EngineProperties properties, TargetFetcherFactory fetchers) {
-        this(new ProcessDocker(), properties, fetchers);
+    public ContainerRunner(EngineProperties properties, TargetFetcherFactory fetchers, EgressSandbox sandbox) {
+        this(new ProcessDocker(), properties, fetchers, sandbox);
     }
 
-    ContainerRunner(Docker docker, EngineProperties properties, TargetFetcherFactory fetchers) {
+    ContainerRunner(Docker docker, EngineProperties properties, TargetFetcherFactory fetchers, EgressSandbox sandbox) {
         this.docker = docker;
         this.properties = properties;
         this.fetchers = fetchers;
+        this.sandbox = sandbox;
     }
 
     /** @return 컨테이너 종료 코드 */
     public int run(Spec spec, ClaimedTask task, TaskContext context) throws IOException, InterruptedException {
         String name = "scanmesh-task-" + task.taskId() + "-" + task.attempt();
-        Docker.Container container = docker.run(command(name, spec, task, context), spec.logFile());
+        String pinned = context.pinnedAddress().orElse(null);
+        sandbox.startProxy(task, pinned);
+        try {
+            return runEngine(name, spec, task, context, pinned);
+        } finally {
+            sandbox.stopProxy(task);
+        }
+    }
+
+    private int runEngine(String name, Spec spec, ClaimedTask task, TaskContext context, String pinned) throws IOException, InterruptedException {
+        Docker.Container container = docker.run(command(name, spec, task, pinned), spec.logFile());
         boolean finished = false;
         try (TargetFetcher probe = fetchers.create(task.host(), context.pinnedAddress().orElse(null))) {
             long startedAt = System.nanoTime();
@@ -65,13 +79,13 @@ public class ContainerRunner {
                 long now = System.nanoTime();
                 Duration elapsed = Duration.ofNanos(now - startedAt);
                 if (elapsed.compareTo(spec.timeout()) > 0) {
-                    throw new IOException("엔진이 제한 시간(" + spec.timeout() + ") 안에 끝나지 않았습니다.");
+                    throw new ScanFailure("엔진이 제한 시간(" + spec.timeout() + ") 안에 끝나지 않았습니다.");
                 }
                 context.reportProgress(estimate(elapsed, spec.expectedDuration()));
                 if (now >= nextProbeAt) {
                     failures = isResponding(probe, task) ? 0 : failures + 1;
                     if (failures >= properties.probeFailures()) {
-                        throw new IOException("대상이 " + failures + "번 연달아 응답하지 않아 점검을 멈췄습니다.");
+                        throw new ScanFailure("대상이 " + failures + "번 연달아 응답하지 않아 점검을 멈췄습니다.");
                     }
                     nextProbeAt = now + properties.probeInterval().toNanos();
                 }
@@ -86,17 +100,9 @@ public class ContainerRunner {
         }
     }
 
-    private List<String> command(String name, Spec spec, ClaimedTask task, TaskContext context) {
+    private List<String> command(String name, Spec spec, ClaimedTask task, String pinned) {
         List<String> command = new ArrayList<>(List.of("docker", "run", "--rm", "--name", name));
-        context.pinnedAddress().ifPresent(address -> {
-            // 엔진이 DNS를 다시 조회하지 않고 검사를 통과한 IP로 연결하게 한다
-            command.add("--add-host");
-            command.add(task.host() + ":" + address);
-        });
-        if (properties.dockerNetwork() != null && !properties.dockerNetwork().isBlank()) {
-            command.add("--network");
-            command.add(properties.dockerNetwork());
-        }
+        command.addAll(sandbox.engineNetworkOptions(task, pinned));
         for (String mount : spec.mounts()) {
             command.add("-v");
             command.add(mount);
@@ -127,6 +133,12 @@ public class ContainerRunner {
         Container run(List<String> command, Path logFile) throws IOException;
 
         void remove(String name);
+
+        /** 짧게 끝나는 docker 명령(네트워크·이미지 확인, 프록시 시작 등)을 실행하고 끝날 때까지 기다린다 */
+        ExecResult exec(List<String> command, Duration timeout) throws IOException, InterruptedException;
+
+        record ExecResult(int exitCode, String output) {
+        }
 
         interface Container {
 

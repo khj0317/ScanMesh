@@ -4,6 +4,7 @@ import com.scanmesh.common.finding.Finding;
 import com.scanmesh.common.scan.Engine;
 import com.scanmesh.worker.api.ClaimedTask;
 import com.scanmesh.worker.engine.EngineProperties;
+import com.scanmesh.worker.engine.ScanFailure;
 import com.scanmesh.worker.engine.EngineRunner;
 import com.scanmesh.worker.engine.ResultStore;
 import com.scanmesh.worker.engine.TaskContext;
@@ -48,6 +49,8 @@ public class NucleiEngine implements EngineRunner {
                 "-as", "-rl", "50", "-c", "10",
                 // 사용자가 소유한 사이트라도 서비스를 해치거나 데이터를 바꿀 수 있는 템플릿은 돌리지 않는다
                 "-etags", "dos,fuzz,intrusive,bruteforce",
+                // 엔진은 출구 프록시로만 대상에 닿는다. 외부 콜백 서버(interactsh)는 쓰지 않는다
+                "-proxy", EgressSandbox.proxyUrl(task), "-ni",
                 "-silent", "-disable-update-check"
             ),
             properties.nucleiTimeout(),
@@ -56,7 +59,9 @@ public class NucleiEngine implements EngineRunner {
         );
         int exitCode = containers.run(spec, task, context);
         if (exitCode != 0) {
-            throw new IOException("Nuclei가 종료 코드 " + exitCode + "로 끝났습니다. 로그: " + spec.logFile());
+            // 오류 메시지는 사용자 화면에 보이므로 워커 PC의 파일 경로는 워커 로그에만 남긴다
+            log.warn("Nuclei 실패: task={}, 종료 코드 {}, 로그 {}", task.taskId(), exitCode, spec.logFile());
+            throw new ScanFailure("Nuclei가 종료 코드 " + exitCode + "로 끝났습니다.");
         }
         List<Finding> findings = NucleiResults.parse(directory.resolve("nuclei.jsonl"), MAX_FINDINGS);
         log.info("Nuclei 완료: task={}, 발견 {}건, 결과 폴더={}", task.taskId(), findings.size(), directory);

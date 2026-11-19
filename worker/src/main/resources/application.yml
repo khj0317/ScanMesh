@@ -20,8 +20,10 @@ worker:
     results-dir: ${WORKER_RESULTS_DIR:worker-results}
     # 이 기간이 지난 점검 폴더는 워커가 지운다
     results-retention: ${WORKER_RESULTS_RETENTION:7d}
-    # 비우면 Docker 기본 네트워크를 쓴다
+    # 출구 프록시를 내보낼 네트워크. 비우면 Docker 기본 네트워크. 개발용 대상이 다른 Docker 네트워크에 있을 때 그 이름을 넣는다
     docker-network: ${WORKER_DOCKER_NETWORK:}
+    # 엔진 컨테이너만 붙는 내부 네트워크. 바깥으로 나갈 수 없고, 작업마다 띄우는 출구 프록시로만 대상에 닿는다
+    egress-network: ${WORKER_EGRESS_NETWORK:scanmesh-engines}
     nuclei-image: ${WORKER_NUCLEI_IMAGE:projectdiscovery/nuclei:latest}
     # lab/README.md의 템플릿 받기 명령이 채우는 볼륨을 함께 쓴다
     nuclei-templates-volume: ${WORKER_NUCLEI_TEMPLATES_VOLUME:scanmesh-lab_nuclei-templates}
